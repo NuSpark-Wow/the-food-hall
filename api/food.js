@@ -17,6 +17,7 @@ const STALLS = {
   world: "World Foods (cuisines and signature dishes from countries and cultures around the world, and the stories behind them)",
   history: "Food History (where foods and dishes came from, inventions, famous food firsts, how eating changed over time)",
   wow: "Wow...Who Knew? (surprising, true food facts and busted food myths)",
+  catalog: "Food & Drink Catalog (a full report on one specific food or drink)",
   tools: "The Kitchen Shelf: Kitchen Tools (what a tool is, what it's for, how it works, how to use it safely)",
   methods: "The Kitchen Shelf: Cooking Methods (baking, roasting, sauteing, steaming, braising, grilling and more: what happens to food and why)"
 };
@@ -44,7 +45,8 @@ TOPIC & SAFETY RULES:
 - Stay on food: where food comes from, ingredients, nutrition, food science, world foods, food history, kitchen tools and cooking methods. Politely decline anything else with a friendly one-sentence note.
 - Nutrition is general education only. No diet plans, no weight-loss advice, no calorie targets, no medical or supplement advice, no "good food / bad food" judgments. Whenever a lesson or answer touches nutrition or health, include the sentence: "For advice about your own diet or health, check with a doctor or a registered dietitian."
 - Food safety facts (safe temperatures, raw foods, allergies) must come from sources like USDA, FDA or CDC.
-- Everything must be family-appropriate. No alcohol how-tos. Keep national and global examples, not local ones.
+- Everything must be family-appropriate. Alcoholic drinks (beer, wine, spirits, cocktails) are fine to teach about at the "grown" level: history, types, famous brands, and how they are made commercially. Never encourage drinking and give no home-distilling instructions. At the "kids" level, do not cover alcoholic drinks.
+- Keep national and global examples, not local ones.
 
 WRITING STYLE:
 - "grown" (adults, the default): clear, precise and interesting, with context and real numbers where sources give them. Friendly, not cutesy.
@@ -80,6 +82,31 @@ Reply with ONLY this JSON inside <json></json>:
  "recipeIdea": "if a simple starter recipe naturally fits this lesson, name it (e.g. 'Simple homemade butter'); otherwise empty string",
  "wiki": "the exact English Wikipedia article title that best pictures this lesson (e.g. 'Sourdough')",
  "followups": ["3 short follow-up questions a curious reader might ask next"],
+ ${sourcesShape}}`;
+  }
+  if (mode === "catalog") {
+    const item = String(b.item || "").slice(0, 120);
+    return `Food & Drink Catalog request: "${item}"
+${lvl}
+Research this food or drink with web search and write its catalog report. If it is not a food or drink, set "ok" to false with a kind one-sentence note in "overview". If it is an alcoholic drink and the reading level is "kids", set "ok" to false with the note "That one is a grown-up drink. Switch to Grown-Ups to see its catalog page."
+Only list brand names, dates and places your sources support. Leave a field as an empty string or empty list rather than guess.
+Reply with ONLY this JSON inside <json></json>:
+{"ok": true,
+ "name": "the food or drink's proper name",
+ "category": "e.g. Cheese, Spirit, Condiment, Fruit, Soft drink",
+ "origin": "where it comes from (country or region)",
+ "firstMade": "when it first appeared, if known (e.g. 'Early 1800s'), or empty",
+ "alcohol": false,
+ "overview": "2-3 sentences: what it is",
+ "history": "2-4 sentences on its origin and history (say so when a famous story is a legend)",
+ "types": [{"name": "type or variety", "note": "one short line"}],          // up to 6
+ "brands": ["famous brand names, with country in parentheses"],          // up to 6
+ "howMade": ["step 1", "step 2"],                                          // 4-7 short steps, commercial process
+ "ingredients": ["main ingredients"],                                       // up to 8
+ "versions": [{"place": "country or region", "name": "local version", "note": "one short line"}],  // up to 5
+ "nutrition": "1-2 sentences of general nutrition facts per typical serving, or empty",
+ "wow": "one surprising, sourced fact",
+ "wiki": "exact English Wikipedia article title that best pictures it",
  ${sourcesShape}}`;
   }
   if (mode === "ask") {
@@ -283,7 +310,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    const searches = mode === "lesson" ? 6 : mode === "compare" ? 5 : 4;
+    const searches = mode === "lesson" || mode === "catalog" ? 6 : mode === "compare" ? 5 : 4;
     const { text, retrieved } = await callClaude(prompt, searches);
     const j = extractJson(text) || {};
     const sources = verifySources(j.sources, retrieved);
@@ -298,6 +325,22 @@ module.exports = async (req, res) => {
         ok: true, title: clip(j.title, 140), intro: clip(j.intro, 600), sections, wow: clip(j.wow, 400), kitchen: clip(j.kitchen, 300),
         recipeIdea: clip(j.recipeIdea, 100), wiki: clip(j.wiki, 120), followups: clipList(j.followups, 3, 140),
         health: b.stall === "nutrition" || touchesHealth(all) ? HEALTH_NOTE : "", sources
+      });
+    }
+
+    if (mode === "catalog") {
+      if (j.ok === false) return res.status(200).json({ ok: false, overview: clip(j.overview, 400) || "The catalog only covers foods and drinks. Try another one!" });
+      if (!sources.length) return res.status(200).json({ ok: false, overview: NOT_CONFIRMED[level] });
+      const nutrition = clip(j.nutrition, 500);
+      return res.status(200).json({
+        ok: true, name: clip(j.name, 120), category: clip(j.category, 60), origin: clip(j.origin, 120), firstMade: clip(j.firstMade, 80),
+        overview: clip(j.overview, 700), history: clip(j.history, 1000),
+        types: (Array.isArray(j.types) ? j.types : []).slice(0, 6).map(t => ({ name: clip(t && t.name, 80), note: clip(t && t.note, 200) })).filter(t => t.name),
+        brands: clipList(j.brands, 6, 100), howMade: clipList(j.howMade, 7, 300), ingredients: clipList(j.ingredients, 8, 100),
+        versions: (Array.isArray(j.versions) ? j.versions : []).slice(0, 5).map(v => ({ place: clip(v && v.place, 60), name: clip(v && v.name, 80), note: clip(v && v.note, 200) })).filter(v => v.name),
+        nutrition, wow: clip(j.wow, 400), wiki: clip(j.wiki, 120),
+        alcohol: j.alcohol === true ? "Alcoholic drink: for adults of legal drinking age only. Please enjoy responsibly." : "",
+        health: nutrition ? HEALTH_NOTE : "", sources
       });
     }
 

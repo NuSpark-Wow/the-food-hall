@@ -1,5 +1,5 @@
 {
   "functions": {
-    "api/food.js": { "maxDuration": 60 }
+    "api/food.js": { "maxDuration": 120 }
   }
 }

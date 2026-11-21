@@ -497,21 +497,32 @@ function catalogView(){
       el("div", { class: "chips" }, shuffle(CATALOG_PICKS).slice(0, 8).map(t => el("button", { class: "chip", type: "button", onclick: () => openCatalog(t) }, t))));
   }};
 }
-function openCatalog(item){
+function openCatalog(item, clarification){
   show({ furniture: "catalog", render(d){
     setBar("Food & Drink Catalog", "catalog");
     const view = this;
-    const box = loadingEl("Mr. Paul is pulling the catalog file and checking the sources…");
+    const box = loadingEl("Mr. Paul is pulling the full catalog file and checking the sources. Big reports take about a minute…");
     d.append(box);
     if (!view.data) cooking(true, "Mr. Paul is pulling the catalog file…");
-    (view.data ? Promise.resolve(view.data) : api({ mode: "catalog", item })).then(r => {
+    (view.data ? Promise.resolve(view.data) : api({ mode: "catalog", item, clarification })).then(r => {
       view.data = r;
       cooking(false); box.remove();
+      if (r.clarify) return renderClarify(d, item, r);
       if (!r.ok) { d.append(el("div", { class: "err", text: r.overview })); return; }
       renderCatalog(d, r);
     }).catch(e => { cooking(false); box.replaceWith(el("div", { class: "err", text: e.message })); });
   }});
   syncFurniture();
+}
+function renderClarify(d, item, r){
+  d.append(el("p", { class: "kicker", text: "Quick question" }), el("h2", { text: "👨‍🍳 " + r.question }),
+    el("p", { class: "lead", text: "\"" + item + "\" can mean more than one thing. Pick one so Mr. Paul gets it right." }),
+    el("div", { class: "chips" }, (r.options || []).map(o => el("button", { class: "chip", type: "button", onclick: () => openCatalog(item, o) }, o))));
+  const inp = el("input", { type: "text", id: "clarIn", maxlength: "200", autocomplete: "off" });
+  const go = () => { const v = inp.value.trim(); if (v) openCatalog(item, v); };
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+  d.append(el("div", { class: "field" }, el("label", { for: "clarIn", text: "Or tell Mr. Paul what you mean:" }),
+    el("div", { class: "inrow" }, inp, el("button", { class: "btn", type: "button", onclick: go }, "Go"))));
 }
 function renderCatalog(d, r){
   d.append(el("p", { class: "kicker", text: "Food & Drink Catalog" }), el("h2", { text: r.name }));
@@ -520,22 +531,29 @@ function renderCatalog(d, r){
   if (facts.length) d.append(el("div", { class: "facts" }, facts.map(([k, v]) => el("div", { class: "fact" }, el("small", { text: k }), el("span", { text: v })))));
   if (r.alcohol) d.append(el("div", { class: "box note", style: "clear:none", text: r.alcohol }));
   const sec = (title, node) => { if (node) d.append(el("h3", { text: title }), node); };
+  const has = a => a && a.length;
   sec("Overview", r.overview && el("p", { class: "lead", text: r.overview }));
-  sec("Origin & History", r.history && el("p", { text: r.history }));
-  sec("Types & Varieties", r.types && r.types.length && el("ul", { class: "cat-list" }, r.types.map(t => el("li", {}, el("b", { text: t.name }), t.note ? ": " + t.note : ""))));
-  sec("Famous Brands", r.brands && r.brands.length && el("div", {}, el("div", { class: "brands" }, r.brands.map(b => el("span", { class: "brand", text: b }))), el("p", { class: "ex", text: "Brand names are shown for learning only, not as endorsements." })));
-  sec("How It's Made", r.howMade && r.howMade.length && el("ol", { class: "cat-list" }, r.howMade.map(x => el("li", { text: x }))));
-  sec("Main Ingredients", r.ingredients && r.ingredients.length && el("ul", { class: "cat-list" }, r.ingredients.map(x => el("li", { text: x }))));
-  sec("Versions Around the World", r.versions && r.versions.length && el("ul", { class: "cat-list" }, r.versions.map(v => el("li", {}, el("b", { text: v.name }), v.place ? " (" + v.place + ")" : "", v.note ? ": " + v.note : ""))));
+  sec("Origin & History", has(r.history) && el("div", {}, r.history.map(x => el("p", { text: x }))));
+  sec("Types & Varieties", has(r.types) && el("ul", { class: "cat-list" }, r.types.map(t => el("li", {}, el("b", { text: t.name }), t.note ? ": " + t.note : ""))));
+  sec("Famous Brands", has(r.brands) && el("div", {}, el("div", { class: "brands" }, r.brands.map(b => el("span", { class: "brand", text: b }))), el("p", { class: "ex", text: "Brand names are shown for learning only, not as endorsements." })));
+  sec("How It's Made", has(r.howMade) && el("ol", { class: "cat-list" }, r.howMade.map(x => el("li", { text: x }))));
+  sec("Main Ingredients", has(r.ingredients) && el("ul", { class: "cat-list" }, r.ingredients.map(x => el("li", {}, el("b", { text: x.name }), x.role ? ": " + x.role : ""))));
+  sec("Versions Around the World", has(r.versions) && el("ul", { class: "cat-list" }, r.versions.map(v => el("li", {}, el("b", { text: v.name }), v.place ? " (" + v.place + ")" : "", v.note ? ": " + v.note : ""))));
+  sec("How People Enjoy It", r.enjoy && el("p", { text: r.enjoy }));
+  sec("Buying & Storing", r.buying && el("p", { text: r.buying }));
   sec("Nutrition Snapshot", r.nutrition && el("p", { text: r.nutrition }));
   if (r.health) d.append(el("div", { class: "box note", text: r.health }));
+  sec("Fun Facts", has(r.facts) && el("ul", { class: "cat-list" }, r.facts.map(x => el("li", { text: x }))));
   if (r.wow) d.append(el("div", { class: "box wow" }, el("b", { class: "t", text: "🤯 Wow...Who Knew?" }), r.wow));
   const eyesWrap = el("div", {});
-  const lessonLike = { title: r.name + " (" + (r.category || "food") + ")", intro: r.overview, sections: [{ heading: "History", text: r.history }, { heading: "How it's made", text: (r.howMade || []).join(" ") }], wow: r.wow };
+  const lessonLike = { title: r.name + " (" + (r.category || "food") + ")", intro: r.overview, sections: [{ heading: "History", text: (r.history || []).join(" ") }, { heading: "How it's made", text: (r.howMade || []).join(" ") }], wow: r.wow };
   d.append(el("div", { class: "row" },
     el("button", { class: "btn green", type: "button", onclick: () => show(catalogView()) }, "📖 Look Up Another"),
     el("button", { class: "btn ghost", type: "button", onclick: () => { eyesWrap.innerHTML = ""; eyesWrap.append(eyesPanel(lessonLike)); } }, "👀 Another Set of AI Eyes")), eyesWrap);
-  d.append(footnotes(r.sources), askBar(r.name));
+  d.append(el("h3", { text: "❓ Questions about " + r.name + "?" }),
+    el("p", { class: "ex", text: "Tap a question, or ask your own in the box below." }));
+  if (has(r.followups)) d.append(el("div", { class: "chips" }, r.followups.map(q => el("button", { class: "chip alt", type: "button", onclick: () => openAnswer(q, r.name) }, q))));
+  d.append(askBar(r.name), footnotes(r.sources));
 }
 
 /* lesson */

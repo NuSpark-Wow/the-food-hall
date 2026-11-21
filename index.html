@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- LearnWow member pass (do not remove): gets the member pass from nusparklearnwow.com and shows the Join screen when a visitor runs out of tries -->
+<script>
+(function () {
+  if (window.__lwgate) return; window.__lwgate = 1;
+  var JOIN = "https://nusparklearnwow.com/join/", LOGIN = "https://nusparklearnwow.com/membership-login/";
+  var LW = { pass: null, vid: "" };
+  try { LW.vid = localStorage.getItem("lw_vid") || ""; if (!LW.vid) { LW.vid = (Date.now().toString(36) + Math.random().toString(36).slice(2, 12)); localStorage.setItem("lw_vid", LW.vid); } }
+  catch (e) { LW.vid = "s" + Math.random().toString(36).slice(2, 12); }
+  var okHost = /(^|\.)(nusparklearnwow|nusparkpublishing|nusparkmarketing)\.com$/;
+  var ready = new Promise(function (done) {
+    if (window.parent === window) return done();
+    var fin = false, end = function () { if (!fin) { fin = true; done(); } };
+    window.addEventListener("message", function (e) {
+      var d = e.data; if (!d || d.type !== "lw-pass") return;
+      try { if (!okHost.test(new URL(e.origin).hostname)) return; } catch (x) { return; }
+      LW.pass = d.pass || null;
+      if (d.vid && /^[a-z0-9]{6,40}$/i.test(d.vid)) LW.vid = "w" + d.vid;
+      end();
+    });
+    try { window.parent.postMessage({ type: "lw-pass-request" }, "*"); } catch (x) {}
+    setTimeout(end, 1500);
+  });
+
+  var lastAct = 0;
+  ["pointerdown", "keydown", "touchstart"].forEach(function (ev) { window.addEventListener(ev, function (e) { if (e.isTrusted) lastAct = Date.now(); }, true); });
+
+  var shown = false;
+  function show(j) {
+    if (shown) return; shown = true;
+    var reason = j && j.lwgate;
+    var title = reason === "budget" ? "You've reached this month's limit" : reason === "preview" ? "This is a members feature" : "You've used your tries";
+    var text = reason === "budget"
+      ? "Your membership has hit its monthly usage limit. It resets at the start of next month. Questions? Contact us at nusparklearnwow.com/support."
+      : "Join LearnWow to unlock all 20 experiences. 7-day trial, then $29.99/month. Cancel anytime.";
+    var box = document.createElement("div");
+    box.setAttribute("style", "position:fixed;inset:0;z-index:2147483647;background:rgba(10,25,60,.72);display:flex;align-items:center;justify-content:center;padding:20px;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif");
+    var btn = "display:inline-block;margin:6px;padding:14px 28px;border-radius:40px;font-weight:800;font-size:17px;text-decoration:none;";
+    box.innerHTML =
+      '<div style="background:#123166;color:#fff;max-width:440px;width:100%;border-radius:22px;padding:30px 26px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.35)">' +
+      '<div style="font-size:40px;line-height:1;color:#F2B33D">&#10022;</div>' +
+      '<div style="font-size:24px;font-weight:800;margin:10px 0 8px">' + title + '</div>' +
+      '<div style="font-size:16px;line-height:1.5;opacity:.92;margin-bottom:18px">' + text + '</div>' +
+      (reason === "budget" ? "" : '<a target="_top" href="' + JOIN + '" style="' + btn + 'background:#F2B33D;color:#123166">Join Now</a>') +
+      '<a target="_top" href="' + LOGIN + '" style="' + btn + 'background:transparent;color:#fff;border:2px solid rgba(255,255,255,.6)">Member Log In</a>' +
+      '<div><button type="button" style="margin-top:10px;background:none;border:0;color:#cfd8ef;font-size:14px;cursor:pointer;text-decoration:underline">Keep looking around</button></div>' +
+      "</div>";
+    box.querySelector("button").onclick = function () { box.remove(); shown = false; };
+    (document.body || document.documentElement).appendChild(box);
+  }
+
+  var of = window.fetch && window.fetch.bind(window);
+  if (!of) return;
+  window.fetch = function (input, init) {
+    var url = typeof input === "string" ? input : (input && input.url) || String(input || "");
+    var u; try { u = new URL(url, location.href); } catch (e) { return of(input, init); }
+    if (u.origin !== location.origin || u.pathname.indexOf("/api/") !== 0) return of(input, init);
+    var act = Date.now() - lastAct < 30000;
+    return ready.then(function () {
+      var o = {}; if (init) for (var k in init) o[k] = init[k];
+      var hd = new Headers(o.headers || (typeof input !== "string" && input && input.headers) || undefined);
+      if (LW.pass) hd.set("x-lw-pass", LW.pass);
+      hd.set("x-lw-vid", LW.vid);
+      if (act) hd.set("x-lw-act", "1");
+      o.headers = hd;
+      return of(input, o);
+    }).then(function (r) {
+      if (r.status === 402) r.clone().json().then(function (j) { if (j && j.lwgate) show(j); }).catch(function () {});
+      return r;
+    });
+  };
+})();
+</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Food Hall | Learn...Wow! | NuSparkLearnWow</title>
+<meta name="description" content="Learn where food comes from, what's in it, and why it works. Source-checked food lessons on ingredients, nutrition, food science, world foods and food history.">
+<meta property="og:title" content="The Food Hall: Wow...Who Knew?">
+<meta property="og:description" content="Open a cabinet and learn about food: where it comes from, what's in it, and the science and history behind it. From NuSparkLearnWow.com.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --wall:#f4ecdf; --ink:#2a2420; --soft:#6b5f55;
+  --cab:#5d7a67; --cab-dk:#3f5a49; --cab-lt:#7d9a86; --brass:#c99a2e; --brass-lt:#e8c46a;
+  --wood:#b9874f; --wood-dk:#8a5f33; --steel:#cfd5db; --steel-dk:#8d969f;
+  --screen:#fffdf8; --bezel:#151a20; --tomato:#d9482b; --navy:#1f2a44;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Nunito,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--wall);line-height:1.5}
+button{font-family:inherit}
+a{color:#a8341d}
+
+/* header */
+.top{text-align:center;padding:22px 16px 12px}
+.top h1{font-family:"Playfair Display",Georgia,serif;font-weight:900;font-size:clamp(34px,6vw,54px);margin:0;color:var(--cab-dk);letter-spacing:.5px}
+.top h1 span{color:var(--tomato)}
+.top .tag{margin:4px auto 0;max-width:640px;color:var(--soft);font-size:17px;font-weight:600}
+.lvl{display:inline-flex;margin-top:12px;background:#e7dccb;border-radius:40px;padding:4px}
+.lvl button{border:0;background:none;padding:8px 18px;border-radius:40px;font-weight:800;font-size:15px;color:var(--soft);cursor:pointer}
+.lvl button.on{background:var(--cab);color:#fff}
+
+/* banner */
+.banner{display:flex;gap:6px;overflow:hidden;height:150px;background:var(--cab-dk)}
+.banner figure{margin:0;flex:1 1 0;min-width:110px;position:relative;overflow:hidden;background:#4b6655}
+.banner img{width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .6s}
+.banner img.on{opacity:1}
+.banner figcaption{position:absolute;left:0;right:0;bottom:0;padding:4px 8px;font-size:12px;font-weight:800;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.65))}
+@media(max-width:700px){.banner{height:96px}.banner figure:nth-child(n+5){display:none}}
+
+/* the kitchen wall */
+.kitchen{max-width:1100px;margin:22px auto 0;padding:0 14px}
+.howto{text-align:center;color:var(--soft);font-weight:700;margin:0 0 12px}
+
+/* upper cabinets */
+.cabinets{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;background:var(--cab-dk);padding:10px;border-radius:10px 10px 0 0;box-shadow:0 6px 0 #2f4537}
+.cab{perspective:700px;position:relative;height:150px;border-radius:6px;background:#efe6d6;overflow:hidden;box-shadow:inset 0 0 0 2px #2f4537}
+.cab .inside{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-around;align-items:center;padding:8px 4px;background:repeating-linear-gradient(#efe6d6 0 44px,#d8c7a8 44px 48px)}
+.cab .inside span{font-size:24px;line-height:1}
+.cab .door{position:absolute;inset:0;border:0;cursor:pointer;background:linear-gradient(160deg,var(--cab-lt),var(--cab));color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 22px 10px 8px;border-radius:6px;transform-origin:left center;transition:transform .55s cubic-bezier(.3,.7,.3,1),box-shadow .3s;box-shadow:inset 0 0 0 6px rgba(255,255,255,.12),inset 0 0 0 7px rgba(0,0,0,.18)}
+.cab .door:hover{filter:brightness(1.06)}
+.cab .door:focus-visible{outline:3px solid var(--brass-lt);outline-offset:-3px}
+.cab .door .ico{font-size:34px;line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
+.cab .door .lab{font-weight:800;font-size:14px;line-height:1.2;text-align:center;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.cab .door::after{content:"";position:absolute;right:10px;top:50%;width:7px;height:30px;margin-top:-15px;border-radius:4px;background:linear-gradient(var(--brass-lt),var(--brass));box-shadow:0 1px 2px rgba(0,0,0,.4)}
+.cab.deco{display:none;background:linear-gradient(160deg,#cfe0e6,#a9c3cc);box-shadow:inset 0 0 0 6px var(--cab),inset 0 0 0 8px #2f4537}.cab.deco .inside{background:repeating-linear-gradient(rgba(255,255,255,.25) 0 44px,#d8c7a8 44px 48px)}
+@media(max-width:860px){.cab.deco{display:block}}
+.cab.open .door{transform:rotateY(-78deg);box-shadow:8px 0 14px rgba(0,0,0,.35)}
+@media(max-width:860px){.cabinets{grid-template-columns:repeat(4,1fr)}.cab{height:120px}.cab:nth-child(n+5){grid-column:auto}}
+@media(max-width:520px){.cabinets{grid-template-columns:repeat(4,1fr);gap:6px;padding:8px}.cab{height:96px}.cab .door{padding:8px 14px 8px 4px}.cab .door::after{right:5px;width:5px;height:22px;margin-top:-11px}.cab .door .ico{font-size:26px}.cab .door .lab{font-size:11.5px}.backsplash{padding:14px 8px}.screen{padding:8px}.screen #barRight{display:none}.display{padding:18px 14px}}
+
+/* backsplash + screen */
+.backsplash{padding:22px 18px;background-color:#f7f5f0;background-image:linear-gradient(#dcd6cb 2px,transparent 2px),linear-gradient(90deg,#dcd6cb 2px,transparent 2px),linear-gradient(90deg,#dcd6cb 2px,transparent 2px);background-size:60px 30px,60px 60px,60px 60px;background-position:0 0,0 0,30px 30px}
+.screen{background:var(--bezel);border-radius:18px;padding:12px;box-shadow:0 14px 30px rgba(0,0,0,.28),inset 0 0 0 2px #2b323b}
+.screen .bar{display:flex;justify-content:space-between;align-items:center;color:#9fb0a5;font-size:12.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:0 6px 8px}
+.screen .bar .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#4ade80;margin-right:6px;box-shadow:0 0 6px #4ade80}
+.display{background:var(--screen);border-radius:10px;min-height:340px;padding:22px clamp(16px,3vw,32px);overflow:hidden}
+.navrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.back{border:0;background:#efe6d6;color:var(--ink);font-weight:800;font-size:14px;padding:7px 14px;border-radius:30px;cursor:pointer}
+.kicker{font-size:13px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--tomato);margin:0}
+.display h2{font-family:"Playfair Display",Georgia,serif;font-size:clamp(26px,4vw,36px);line-height:1.15;margin:4px 0 10px;color:var(--navy)}
+.display h3{font-size:19px;margin:18px 0 4px;color:var(--cab-dk)}
+.display p{margin:0 0 10px;font-size:17px}
+.lead{font-size:18.5px !important;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+.chip{border:2px solid var(--cab);background:#fff;color:var(--cab-dk);font-weight:800;font-size:15.5px;padding:10px 16px;border-radius:30px;cursor:pointer;text-align:left;transition:.15s}
+.chip:hover{background:var(--cab);color:#fff}
+.chip.alt{border-color:var(--tomato);color:#a8341d}
+.chip.alt:hover{background:var(--tomato);color:#fff}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+.btn{border:0;background:var(--tomato);color:#fff;font-weight:800;font-size:16px;padding:11px 20px;border-radius:30px;cursor:pointer}
+.btn.green{background:var(--cab)}
+.btn.ghost{background:#fff;color:var(--cab-dk);border:2px solid var(--cab)}
+.btn:disabled{opacity:.55;cursor:wait}
+.field label,.ex{display:block;font-size:14.5px;font-weight:700;color:var(--soft);margin:0 0 6px}
+.field{margin-top:16px}
+.inrow{display:flex;gap:8px}
+.inrow input,.field textarea{flex:1;min-width:0;font:inherit;font-size:16.5px;padding:12px 14px;border:2px solid #d9cdb8;border-radius:12px;background:#fff}
+.field textarea{width:100%;min-height:120px;resize:vertical}
+.inrow input:focus,.field textarea:focus{outline:none;border-color:var(--cab)}
+.photo{float:right;width:min(42%,340px);margin:0 0 12px 18px;border-radius:12px;overflow:hidden;background:#efe6d6;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.photo img{width:100%;display:block;max-height:300px;object-fit:cover}
+.photo figcaption{font-size:12px;color:var(--soft);padding:5px 8px}
+@media(max-width:620px){.photo{float:none;width:100%;margin:0 0 14px}}
+.box{clear:both;border-radius:14px;padding:14px 16px;margin:16px 0}
+.box b.t{display:block;font-size:13px;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:4px}
+.wow{background:#fff4d6;border:2px dashed var(--brass)}
+.wow b.t{color:#8a6510}
+.kit{background:#eaf2ec;border:2px solid #b9d0bf}
+.kit b.t{color:var(--cab-dk)}
+.note{background:#f3f0ea;border-left:5px solid var(--steel-dk);font-size:15px}
+.allergy{background:#fdecea;border-left:5px solid var(--tomato);font-size:15px}
+.fn{clear:both;border-top:2px solid #eee3d0;margin-top:18px;padding-top:10px;font-size:14px}
+.fn b{display:block;font-size:12.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--soft);margin-bottom:4px}
+.fn ol{margin:0;padding-left:20px}
+.fn li{margin:2px 0;word-break:break-word}
+.recipe ul,.recipe ol{padding-left:22px;font-size:17px}
+.recipe li{margin:4px 0}
+.meta{display:flex;gap:16px;flex-wrap:wrap;font-weight:800;color:var(--soft);font-size:15px;margin-bottom:6px}
+.loading{display:flex;align-items:center;gap:12px;font-weight:800;color:var(--cab-dk);font-size:17px;padding:30px 0}
+.spin{width:28px;height:28px;border-radius:50%;border:4px solid #d9cdb8;border-top-color:var(--tomato);animation:sp .8s linear infinite;flex:none}
+@keyframes sp{to{transform:rotate(360deg)}}
+.err{background:#fdecea;color:#7a2010;border-radius:12px;padding:12px 14px;font-weight:700}
+.agree{font-weight:900;font-size:18px}
+.eyes{background:#f5f1fb;border:2px solid #d8cdee}
+.askbar{border-top:2px dashed #e5d9c4;margin-top:22px;padding-top:6px}
+
+/* counter + range + drawers */
+.counter{height:22px;background:linear-gradient(var(--wood),var(--wood-dk));border-radius:4px;box-shadow:0 4px 0 #6d4a26}
+.lower{display:grid;grid-template-columns:1.25fr 1fr;gap:10px;background:var(--cab-dk);padding:10px;border-radius:0 0 10px 10px}
+.range{background:linear-gradient(var(--steel),#b9c1c9);border-radius:8px;padding:10px;box-shadow:inset 0 0 0 2px var(--steel-dk)}
+.cooktop{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;background:#1d2226;border-radius:6px;padding:12px}
+.burner{aspect-ratio:1;max-height:70px;justify-self:center;width:100%;max-width:70px;border-radius:50%;background:radial-gradient(circle,#30363c 0 18%,#14181b 19% 30%,#30363c 31% 42%,#14181b 43% 56%,#30363c 57% 68%,#14181b 69%);transition:box-shadow .4s}
+body.cooking .burner{animation:glow 1.4s ease-in-out infinite;background:radial-gradient(circle,#ff7a3d 0 18%,#5a1a0a 19% 30%,#ff5a1f 31% 42%,#5a1a0a 43% 56%,#e8471a 57% 68%,#2a0d05 69%)}
+body.cooking .burner:nth-child(2){animation-delay:.35s}body.cooking .burner:nth-child(3){animation-delay:.7s}body.cooking .burner:nth-child(4){animation-delay:1.05s}
+@keyframes glow{50%{box-shadow:0 0 18px 4px rgba(255,98,30,.55)}}
+.knobs{display:flex;justify-content:space-around;padding:10px 6px}
+.knob{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#f2f4f6,#7d8790);box-shadow:0 2px 3px rgba(0,0,0,.35)}
+.oven{background:#1d2226;border-radius:6px;padding:12px;color:#fff}
+.oven .handle{height:10px;border-radius:6px;background:linear-gradient(#eef1f4,#8d969f);margin:0 10% 12px}
+.oven .window{background:radial-gradient(ellipse at center,#4b2a14,#140b06);border-radius:8px;min-height:96px;display:flex;align-items:center;justify-content:center;text-align:center;padding:12px;font-weight:800;color:#ffd9a8;font-size:15px;box-shadow:inset 0 0 0 3px #3a4046}
+body.cooking .oven .window{background:radial-gradient(ellipse at center,#b8561b,#3a1606)}
+.drawers{display:flex;flex-direction:column;gap:8px}
+.shelf-title{background:var(--wood);color:#fff;font-family:"Playfair Display",Georgia,serif;font-weight:900;font-size:19px;text-align:center;padding:8px;border-radius:6px;box-shadow:inset 0 -3px 0 var(--wood-dk)}
+.drawer{flex:1;border:0;cursor:pointer;border-radius:6px;background:linear-gradient(160deg,var(--cab-lt),var(--cab));color:#fff;font-weight:800;font-size:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:14px 8px;min-height:74px;box-shadow:inset 0 0 0 6px rgba(255,255,255,.12),inset 0 0 0 7px rgba(0,0,0,.18);transition:transform .3s}
+.drawer:hover{filter:brightness(1.06)}
+.drawer.open{transform:translateY(5px) scale(1.02);box-shadow:inset 0 0 0 6px rgba(255,255,255,.2),0 8px 14px rgba(0,0,0,.35)}
+.drawer::before{content:"";width:60px;height:8px;border-radius:4px;background:linear-gradient(var(--brass-lt),var(--brass));box-shadow:0 1px 2px rgba(0,0,0,.4)}
+.drawer .sub{font-size:13px;font-weight:700;opacity:.9}
+@media(max-width:700px){.lower{grid-template-columns:1fr}.burner{max-width:54px}}
+
+/* Mr. Paul host */
+.mphost{display:flex;align-items:center;gap:14px;max-width:1100px;margin:22px auto 4px;padding:0 14px}
+.mphost .mpfig{width:96px;flex:none;filter:drop-shadow(0 4px 8px rgba(0,0,0,.3))}
+.mphost .mpfig svg{width:100%;height:auto;display:block}
+.mphost .mpbub{position:relative;background:#fff;color:var(--navy);border:2px solid var(--brass);border-radius:16px;padding:10px 16px;font-weight:700;font-size:16px;line-height:1.35;max-width:340px}
+.mphost .mpbub::before{content:"";position:absolute;left:-11px;top:50%;margin-top:-9px;border:9px solid transparent;border-right-color:var(--brass);border-left:0}
+.mphost .mpbub::after{content:"";position:absolute;left:-7px;top:50%;margin-top:-7px;border:7px solid transparent;border-right-color:#fff;border-left:0}
+@media(max-width:560px){.mphost .mpfig{width:74px}.mphost .mpbub{font-size:15px}}
+
+footer{max-width:1100px;margin:10px auto 30px;padding:14px;font-size:13.5px;color:var(--soft);border-top:2px solid #e5d9c4}
+footer p{margin:6px 0}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1>The Food <span>Hall</span></h1>
+  <p class="tag">Learn where food comes from, what's in it, and why it works. Wow...Who Knew?</p>
+  <div class="lvl" role="group" aria-label="Reading level">
+    <button type="button" data-lvl="grown">Grown-Ups</button>
+    <button type="button" data-lvl="kids">Kids</button>
+  </div>
+</header>
+
+<div class="banner" id="banner" aria-hidden="true"></div>
+
+<main class="kitchen">
+  <p class="howto">Open a cabinet to visit a stall, or pull open a drawer on the Kitchen Shelf below the screen.</p>
+
+  <div class="cabinets" id="cabinets"></div>
+
+  <div class="backsplash">
+    <div class="screen">
+      <div class="bar"><span><span class="dot"></span><span id="barLeft">The Food Hall</span></span><span id="barRight">Now Serving: Curiosity</span></div>
+      <div class="display" id="display" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <div class="counter"></div>
+  <div class="lower">
+    <div class="range">
+      <div class="cooktop"><div class="burner"></div><div class="burner"></div><div class="burner"></div><div class="burner"></div></div>
+      <div class="knobs"><span class="knob"></span><span class="knob"></span><span class="knob"></span><span class="knob"></span><span class="knob"></span></div>
+      <div class="oven"><div class="handle"></div><div class="window" id="ovenWin">Mr. Paul's oven is warm and ready.</div></div>
+    </div>
+    <div class="drawers">
+      <div class="shelf-title">The Kitchen Shelf</div>
+      <button class="drawer" type="button" data-shelf="tools">🔪 Kitchen Tools<span class="sub">What it is and what it's for</span></button>
+      <button class="drawer" type="button" data-shelf="methods">🔥 Cooking Methods<span class="sub">Bake, roast, sauté, steam…</span></button>
+      <button class="drawer" type="button" data-shelf="recipes">📒 Starter Recipes<span class="sub">Simple dishes tied to a lesson</span></button>
+    </div>
+  </div>
+</main>
+
+<!-- Mr. Paul, the Food Hall's host (cartoon drawn in code) -->
+<div class="mphost" role="note" aria-label="Mr. Paul says: Welcome to The Food Hall! What are we learning about today?"><div class="mpfig"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -12 320 392" class="mph-svg" aria-hidden="true"><defs><linearGradient id="mph-skin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6d2bb"></stop><stop offset="1" stop-color="#eebc9f"></stop></linearGradient><linearGradient id="mph-coat" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"></stop><stop offset="1" stop-color="#e6ecf2"></stop></linearGradient><linearGradient id="mph-lens" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d8dde0" stop-opacity=".45"></stop><stop offset="1" stop-color="#aeb6bc" stop-opacity=".3"></stop></linearGradient><linearGradient id="mph-glens" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6f6ff"></stop><stop offset=".6" stop-color="#a9d8f2"></stop><stop offset="1" stop-color="#7fbfe3"></stop></linearGradient></defs><path d="M40 380 C44 318 78 290 122 282 L160 300 L198 282 C242 290 276 318 280 380 Z" fill="url(#mph-coat)" stroke="#94a3b8" stroke-width="3"></path><path d="M160 302 L204 288 C212 324 212 356 210 380 L150 380 Z" fill="#f8fafc" stroke="#94a3b8" stroke-width="2.5"></path><g fill="#64748b"><circle cx="172" cy="322" r="4.5"></circle><circle cx="196" cy="322" r="4.5"></circle><circle cx="172" cy="350" r="4.5"></circle><circle cx="196" cy="350" r="4.5"></circle></g><rect x="70" y="330" width="56" height="22" rx="4" fill="#c99a2e"></rect><text x="98" y="345.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#1f2a44">Mr. Paul</text><path d="M126 282 Q160 304 194 282 L190 298 Q160 318 130 298 Z" fill="#dc2626" stroke="#991b1b" stroke-width="2"></path><path d="M152 304 L168 304 L174 326 L160 318 L146 326 Z" fill="#dc2626" stroke="#991b1b" stroke-width="2"></path><!-- neck --><path d="M134 240 L136 290 Q160 304 184 290 L186 240 Z" fill="#e8b294"></path><!-- side hair (behind head), soft and fluffy --><g fill="#dedad2"><ellipse cx="82" cy="130" rx="14" ry="22"></ellipse><ellipse cx="78" cy="152" rx="18" ry="30"></ellipse><ellipse cx="76" cy="182" rx="14" ry="24"></ellipse><ellipse cx="88" cy="206" rx="12" ry="16"></ellipse><ellipse cx="238" cy="130" rx="14" ry="22"></ellipse><ellipse cx="242" cy="152" rx="18" ry="30"></ellipse><ellipse cx="244" cy="182" rx="14" ry="24"></ellipse><ellipse cx="232" cy="206" rx="12" ry="16"></ellipse></g><g stroke="#c2bdb3" stroke-width="1.8" fill="none" stroke-linecap="round"><path d="M70 132 C64 150 64 170 70 190"></path><path d="M78 140 C74 160 74 184 82 206"></path><path d="M66 124 C62 118 60 112 61 106"></path><path d="M250 132 C256 150 256 170 250 190"></path><path d="M242 140 C246 160 246 184 238 206"></path><path d="M254 124 C258 118 260 112 259 106"></path></g><!-- ears --><ellipse cx="82" cy="168" rx="13" ry="20" fill="#eab597"></ellipse><ellipse cx="238" cy="168" rx="13" ry="20" fill="#eab597"></ellipse><path d="M84 158 Q78 168 85 178" stroke="#cf957a" stroke-width="2.5" fill="none" stroke-linecap="round"></path><path d="M236 158 Q242 168 235 178" stroke="#cf957a" stroke-width="2.5" fill="none" stroke-linecap="round"></path><!-- head --><path d="M160 42 C216 42 240 86 240 142 C240 210 214 254 160 254 C106 254 80 210 80 142 C80 86 104 42 160 42 Z" fill="url(#mph-skin)"></path><!-- thinning hair on top --><path d="M90 118 C88 74 116 46 160 44 C204 46 232 74 230 118 C222 96 206 82 186 80 C176 70 146 70 134 80 C114 82 98 96 90 118 Z" fill="#d6d1c8"></path><g stroke="#b3ada2" stroke-width="2" fill="none" stroke-linecap="round"><path d="M110 84 C122 62 140 52 160 50"></path><path d="M122 78 C134 62 150 56 166 56"></path><path d="M210 84 C198 62 180 52 160 50"></path><path d="M198 78 C186 62 170 56 154 58"></path><path d="M96 106 C100 90 108 80 120 72"></path><path d="M224 106 C220 90 212 80 200 72"></path><path d="M146 72 C150 64 158 60 166 62"></path><path d="M160 70 C164 62 172 58 180 60"></path></g><ellipse cx="160" cy="58" rx="22" ry="7" fill="#fff" opacity=".22"></ellipse><g><path d="M108 136 Q126 126 146 132" stroke="#8c847a" stroke-width="5" fill="none" stroke-linecap="round"></path><path d="M174 132 Q194 126 212 136" stroke="#8c847a" stroke-width="5" fill="none" stroke-linecap="round"></path></g><!-- eyes --><ellipse cx="128" cy="158" rx="10" ry="7.5" fill="#fff"></ellipse><ellipse cx="192" cy="158" rx="10" ry="7.5" fill="#fff"></ellipse><circle cx="129" cy="158" r="5.5" fill="#7d9277"></circle><circle cx="193" cy="158" r="5.5" fill="#7d9277"></circle><circle cx="129" cy="158" r="2.6" fill="#22262b"></circle><circle cx="193" cy="158" r="2.6" fill="#22262b"></circle><circle cx="131" cy="156" r="1.4" fill="#fff"></circle><circle cx="195" cy="156" r="1.4" fill="#fff"></circle><!-- smile crinkles --><path d="M112 164 Q118 170 126 168" stroke="#d29c80" stroke-width="2" fill="none" stroke-linecap="round"></path><path d="M208 164 Q202 170 194 168" stroke="#d29c80" stroke-width="2" fill="none" stroke-linecap="round"></path><!-- glasses: dark grey translucent rectangular frames --><rect x="100" y="138" width="56" height="40" rx="8" fill="url(#mph-lens)" stroke="#555b63" stroke-width="6"></rect><rect x="164" y="138" width="56" height="40" rx="8" fill="url(#mph-lens)" stroke="#555b63" stroke-width="6"></rect><path d="M156 152 Q160 148 164 152" stroke="#555b63" stroke-width="5" fill="none"></path><path d="M100 148 L84 146" stroke="#555b63" stroke-width="5" stroke-linecap="round"></path><path d="M220 148 L236 146" stroke="#555b63" stroke-width="5" stroke-linecap="round"></path><circle cx="104" cy="142" r="2" fill="#9aa1a9"></circle><circle cx="216" cy="142" r="2" fill="#9aa1a9"></circle><!-- nose --><path d="M160 168 C156 186 150 196 152 202 C156 208 166 208 170 202" stroke="#cf957a" stroke-width="3.5" fill="none" stroke-linecap="round"></path><!-- rosy cheeks --><ellipse cx="114" cy="200" rx="15" ry="9" fill="#f29a8a" opacity=".45"></ellipse><ellipse cx="206" cy="200" rx="15" ry="9" fill="#f29a8a" opacity=".45"></ellipse><!-- light stubble around mouth and chin --><path d="M122 212 C128 244 192 244 198 212 C198 234 184 252 160 252 C136 252 122 234 122 212 Z" fill="#c9b6a6" opacity=".22"></path><g><path d="M136 220 Q160 236 184 220" stroke="#b5635a" stroke-width="4.5" fill="none" stroke-linecap="round"></path><path d="M132 218 Q134 222 137 221" stroke="#b5635a" stroke-width="3" fill="none" stroke-linecap="round"></path><path d="M188 218 Q186 222 183 221" stroke="#b5635a" stroke-width="3" fill="none" stroke-linecap="round"></path></g><!-- chef hat --><g stroke="#94a3b8" stroke-width="3" fill="#ffffff"><circle cx="112" cy="64" r="34"></circle><circle cx="208" cy="64" r="34"></circle><circle cx="138" cy="40" r="36"></circle><circle cx="182" cy="40" r="36"></circle><circle cx="160" cy="26" r="34"></circle></g><path d="M86 70 L234 70 L234 100 L86 100 Z" fill="#ffffff"></path><g stroke="#cbd5e1" stroke-width="2" fill="none" stroke-linecap="round"><path d="M126 56 C128 66 128 72 128 80"></path><path d="M160 44 C160 60 160 70 160 80"></path><path d="M194 56 C192 66 192 72 192 80"></path></g><path d="M82 92 Q160 80 238 92 L234 122 Q160 110 86 122 Z" fill="#ffffff" stroke="#94a3b8" stroke-width="3"></path></svg></div><div class="mpbub">Welcome to The Food Hall! What are we learning about today?</div></div>
+
+<footer>
+  <p>Lessons are researched live with AI and real sources. It can still make mistakes, so the footnotes are always there for you to check.</p>
+  <p>Nutrition lessons are general education, not medical or diet advice. For advice about your own diet or health, check with a doctor or a registered dietitian. Starter recipes are simple home versions: always check ingredient labels for allergies.</p>
+  <p>Photos from Wikipedia / Wikimedia Commons, credited on each photo.</p>
+  <p>The Food Hall is part of <a href="https://nusparklearnwow.com" target="_blank" rel="noopener">NuSparkLearnWow.com</a> from NuSpark Publishing.</p>
+</footer>
+
+<script>
+/* ---------- data ---------- */
+const STALLS = [
+  { id: "origins", ico: "🌾", name: "Where It Comes From", blurb: "Farms, oceans, orchards and factories: how food is grown, raised, caught or made, and how it gets to your store.", inside: "🌽🐄🐟",
+    topics: ["How chocolate goes from bean to bar","Where vanilla really comes from","How rice is grown","How maple syrup is made","Where cinnamon comes from","How cheese is made","The journey of a banana to your store","How salt is harvested","How coffee is grown and roasted","How honey is made","How olive oil is pressed","How wheat becomes flour"] },
+  { id: "ingredients", ico: "🧂", name: "Ingredients", blurb: "What's really in your food, what each ingredient does, and why it's there.", inside: "🧈🥚🧂",
+    topics: ["What baking soda actually does","Baking soda vs. baking powder","Why so many recipes use eggs","What gluten is","What yeast is and how it works","What MSG really is","Why salt makes food taste better","What cornstarch does","Types of sugar explained","What emulsifiers are","Butter vs. margarine","What \"natural flavors\" means on a label"] },
+  { id: "nutrition", ico: "🥦", name: "Nutrition", blurb: "Vitamins, protein, carbs and more, explained simply. Education only, with no diet plans.", inside: "🥕🍎🥦",
+    topics: ["What protein does in your body","Vitamins A to K explained","Fiber: what it is and what it does","Simple vs. complex carbs","Saturated, unsaturated and trans fats","How to read a Nutrition Facts label","What a calorie really is","Iron, calcium and potassium","Whole grain vs. refined grain","What antioxidants are","Why your body needs water","What sodium does in the body"] },
+  { id: "science", ico: "🔬", name: "Food Science", blurb: "The chemistry and physics in your kitchen: why bread rises, why onions sting, and why browned food tastes so good.", inside: "🧪🍞🧅",
+    topics: ["Why bread rises","Why onions make you cry","The Maillard reaction: why browned food tastes great","Why popcorn pops","Why cut apples turn brown","How fermentation works","Why chili peppers taste hot","What happens to an egg when you cook it","Why meat should rest after cooking","Why oil and water don't mix","How freezing keeps food fresh","Why old-fashioned ice cream makers use salt"] },
+  { id: "world", ico: "🌍", name: "World Foods", blurb: "Cuisines and signature dishes from around the world, and the stories behind them.", inside: "🍣🌮🍝",
+    topics: ["Sushi beyond the California roll","Mexican mole","India's spices and curries","Why Italy has so many pasta shapes","Ethiopian injera","Korean kimchi","The French mother sauces","Thai cooking's balance of flavors","Peruvian ceviche","Moroccan tagine","Dumplings around the world","Middle Eastern hummus"] },
+  { id: "history", ico: "📜", name: "Food History", blurb: "Where foods and dishes came from, famous food firsts, and how eating changed the world.", inside: "🍕🥪🍅",
+    topics: ["The real story of the sandwich","Where pizza came from","How the potato changed the world","The spice trade","The potato chip: legend vs. fact","How canning was invented","The surprising history of ketchup","How the refrigerator changed eating","The history of chocolate","How the tomato came to Italy","The first breakfast cereals","The history of the hamburger"] },
+  { id: "wow", ico: "🤯", name: "Wow...Who Knew?", blurb: "Surprising, true food facts, plus food myths put to the test.", inside: "🍌🍓🍯",
+    topics: ["Are peanuts really nuts?","Do carrots help you see in the dark?","Does honey ever spoil?","Is a tomato a fruit or a vegetable?","Are bananas berries?","Does searing meat \"seal in\" the juices?","Why white chocolate isn't really chocolate","Does sugar make kids hyper?","Is the five-second rule real?","Why most \"wasabi\" isn't wasabi","Does swallowed gum stay in you for 7 years?","Why cilantro tastes like soap to some people"] }
+];
+const SHELF = {
+  tools: { ico: "🔪", name: "Kitchen Tools", blurb: "What each tool is, what it's for, and how it works.",
+    topics: ["Chef's knife vs. paring knife","Why cooks love cast iron","How nonstick pans work","What a Dutch oven does","Why an instant-read thermometer matters","Dry vs. liquid measuring cups","How a pressure cooker works","Why bakers use a kitchen scale","The whisk: how it works","Microplane and graters","How a stand mixer works","Using a mandoline safely"] },
+  methods: { ico: "🔥", name: "Cooking Methods", blurb: "What really happens to food when you bake, roast, sauté or steam it.",
+    topics: ["Baking","Roasting","Sautéing","Steaming","Braising","Grilling","Boiling vs. simmering","Poaching","Frying","Broiling","Stir-frying","Sous vide"] },
+  recipes: { ico: "📒", name: "Starter Recipes", blurb: "Simple home recipes that go with what you're learning. Pick one, or type in any dish.",
+    topics: ["Simple homemade butter","Easy guacamole","No-knead bread","Slow, creamy scrambled eggs","Stovetop popcorn","Simple tomato sauce","Overnight oats","Easy fried rice","Fresh lemonade","Basic vinaigrette","Banana bread","Quick pickled cucumbers"] }
+};
+const BANNER = ["Tomato","Bread","Sushi","Spice","Cheese","Honey","Pasta","Strawberry","Rice","Coffee"];
+const BAR_RIGHT = { home: "Now Serving: Curiosity", stall: "Pick a Topic", lesson: "Fresh Lesson", recipe: "From the Kitchen Shelf", answer: "Answer Served" };
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+function el(tag, attrs, ...kids){
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === "text") e.textContent = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else if (v !== false && v != null) e.setAttribute(k, v);
+  }
+  for (const k of kids.flat()) if (k != null && k !== false) e.append(k.nodeType ? k : document.createTextNode(k));
+  return e;
+}
+const store = {
+  get(k, d){ try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch(e){ return d; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const cleanAI = v => typeof v === "string" ? v.replace(/<\/?cite\b[^>]*>/gi, "").replace(/<\/?[a-z_]+:[a-z_]+\b[^>]*>/gi, "").replace(/\*\*/g, "").replace(/[ \t]{2,}/g, " ").trim()
+  : Array.isArray(v) ? v.map(cleanAI) : (v && typeof v === "object") ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, cleanAI(x)])) : v;
+async function api(body){
+  const r = await fetch("/api/food", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...body, level: state.level }) });
+  let j = {}; try { j = await r.json(); } catch(e){}
+  if (r.status === 402) throw new Error("Join LearnWow to keep learning in The Food Hall.");
+  if (!r.ok) throw new Error(j.message || j.error || "Something went wrong. Please try again.");
+  return cleanAI(j);
+}
+
+/* ---------- photos (Wikipedia / Wikimedia Commons, credited) ---------- */
+const photoMem = {};
+function wikiPhoto(title, size){
+  if (!title) return Promise.resolve(null);
+  const key = title + "|" + (size || 800);
+  if (photoMem[key]) return photoMem[key];
+  const cached = store.get("fh_ph_" + key, null);
+  if (cached && cached.t > Date.now() - 7 * 864e5) return (photoMem[key] = Promise.resolve(cached.v));
+  return (photoMem[key] = (async () => {
+    try {
+      const u = "https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&redirects=1&prop=pageimages&piprop=thumbnail&pithumbsize=" + (size || 800) + "&titles=" + encodeURIComponent(title);
+      const j = await (await fetch(u)).json();
+      const page = Object.values((j.query && j.query.pages) || {})[0];
+      const src = page && page.thumbnail && page.thumbnail.source;
+      if (!src || /\.svg/i.test(src)) return null;
+      const v = { src, title: page.title, link: "https://en.wikipedia.org/wiki/" + encodeURIComponent(page.title.replace(/ /g, "_")) };
+      store.set("fh_ph_" + key, { t: Date.now(), v });
+      return v;
+    } catch(e){ return null; }
+  })());
+}
+function photoFig(title){
+  const fig = el("figure", { class: "photo", hidden: "" });
+  wikiPhoto(title).then(p => {
+    if (!p) return fig.remove();
+    const img = el("img", { src: p.src, alt: p.title, loading: "lazy" });
+    img.onerror = () => fig.remove();
+    fig.append(img, el("figcaption", {}, "Photo: ", el("a", { href: p.link, target: "_blank", rel: "noopener", text: "Wikipedia, " + p.title })));
+    fig.hidden = false;
+  });
+  return fig;
+}
+function buildBanner(){
+  const b = $("#banner");
+  shuffle(BANNER).slice(0, 8).forEach(t => {
+    const fig = el("figure", {});
+    b.append(fig);
+    wikiPhoto(t, 400).then(p => {
+      if (!p) return;
+      const img = el("img", { src: p.src, alt: "" });
+      img.onload = () => img.classList.add("on");
+      fig.append(img, el("figcaption", { text: p.title }));
+    });
+  });
+}
+
+/* ---------- state + screen ---------- */
+const state = { level: store.get("fh_level", "grown"), view: null, stack: [], seen: {}, lesson: null };
+const display = $("#display");
+function setBar(left, kind){ $("#barLeft").textContent = left || "The Food Hall"; $("#barRight").textContent = BAR_RIGHT[kind] || BAR_RIGHT.home; }
+function show(view, push = true){
+  if (push && state.view) state.stack.push(state.view);
+  state.view = view;
+  display.innerHTML = "";
+  if (state.stack.length) display.append(el("div", { class: "navrow" },
+    el("button", { class: "back", type: "button", onclick: goBack }, "← Back"),
+    el("button", { class: "back", type: "button", onclick: goHome }, "🏠 Food Hall Home")));
+  view.render(display);
+  if (push) display.closest(".screen").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function goBack(){ const v = state.stack.pop(); if (v) show(v, false); syncFurniture(); }
+function goHome(){ state.stack = []; show(homeView(), false); syncFurniture(); }
+function syncFurniture(){
+  const id = state.view && state.view.furniture;
+  document.querySelectorAll(".cab").forEach(c => c.classList.toggle("open", c.dataset.id === id));
+  document.querySelectorAll(".drawer").forEach(d => d.classList.toggle("open", d.dataset.shelf === id));
+}
+function cooking(on, msg){
+  document.body.classList.toggle("cooking", !!on);
+  $("#ovenWin").textContent = on ? (msg || "Mr. Paul is cooking up your lesson…") : "Mr. Paul's oven is warm and ready.";
+}
+function loadingEl(msg){ return el("div", { class: "loading" }, el("span", { class: "spin" }), msg); }
+
+/* ---------- views ---------- */
+function homeView(){
+  return { furniture: null, render(d){
+    setBar("The Food Hall", "home");
+    d.append(el("p", { class: "kicker", text: "Welcome in" }),
+      el("h2", { text: "What are we learning about today?" }),
+      el("p", { class: "lead", text: "Each cabinet up top is a stall in the Food Hall. Open one to pick a topic, and Mr. Paul will serve up a lesson checked against real sources. Kitchen tools, cooking methods and starter recipes live in the drawers below." }),
+      el("h3", { text: "Today's Specials" }));
+    const specials = shuffle(STALLS).slice(0, 4).map(s => ({ s, t: shuffle(s.topics)[0] }));
+    d.append(el("div", { class: "chips" }, specials.map(({ s, t }) => el("button", { class: "chip", type: "button", onclick: () => openLesson(s.id, t, s.name) }, s.ico + " " + t))));
+    d.append(askBar());
+  }};
+}
+function stallView(id){
+  const s = STALLS.find(x => x.id === id) || Object.assign({ id }, SHELF[id]);
+  const isRecipes = id === "recipes";
+  return { furniture: id, render(d){
+    setBar(s.name, "stall");
+    d.append(el("p", { class: "kicker", text: STALLS.some(x => x.id === id) ? "Stall" : "The Kitchen Shelf" }),
+      el("h2", { text: s.ico + " " + s.name }), el("p", { class: "lead", text: s.blurb }));
+    const seen = state.seen[id] || (state.seen[id] = new Set());
+    const pool = s.topics.filter(t => !seen.has(t));
+    const pick = shuffle(pool.length >= 6 ? pool : s.topics).slice(0, 6);
+    pick.forEach(t => seen.add(t));
+    const chips = el("div", { class: "chips" });
+    const addChips = list => list.forEach(t => chips.append(el("button", { class: "chip", type: "button", onclick: () => isRecipes ? openRecipe(t) : openLesson(id, t, s.name) }, t)));
+    addChips(pick);
+    d.append(chips);
+    const msg = el("p", { class: "ex" });
+    if (!isRecipes) {
+      const more = el("button", { class: "btn green", type: "button" }, "Show Me 6 More");
+      more.onclick = async () => {
+        more.disabled = true; msg.textContent = "Mr. Paul is thinking up new topics…";
+        try {
+          const r = await api({ mode: "more", stall: id, exclude: [...seen] });
+          const fresh = (r.topics || []).filter(t => !seen.has(t));
+          fresh.forEach(t => seen.add(t));
+          if (fresh.length) { chips.innerHTML = ""; addChips(fresh); msg.textContent = ""; }
+          else msg.textContent = "No new ideas came back. Try again in a moment.";
+        } catch(e){ msg.textContent = e.message; }
+        more.disabled = false;
+      };
+      d.append(el("div", { class: "row" }, more), msg);
+    }
+    const inp = el("input", { type: "text", id: "own-" + id, maxlength: "160", autocomplete: "off" });
+    const go = () => { const v = inp.value.trim(); if (v) isRecipes ? openRecipe(v) : openLesson(id, v, s.name); };
+    inp.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+    d.append(el("div", { class: "field" },
+      el("label", { for: "own-" + id, text: isRecipes ? "Or type in any dish:" : "Or choose your own topic:" }),
+      el("span", { class: "ex", text: isRecipes ? "Example: homemade pizza dough" : exampleFor(id) }),
+      el("div", { class: "inrow" }, inp, el("button", { class: "btn", type: "button", onclick: go }, isRecipes ? "Get Recipe" : "Teach Me"))));
+    if (isRecipes) d.append(el("div", { class: "box allergy" }, "Starter recipes are simple home versions. Always check ingredient labels for allergies."));
+  }};
+}
+function exampleFor(id){
+  return ({ origins: "Example: how peanut butter is made", ingredients: "Example: what xanthan gum does", nutrition: "Example: what vitamin D does", science: "Example: why soda goes flat",
+    world: "Example: the food of Vietnam", history: "Example: the history of the doughnut", wow: "Example: is brown sugar healthier than white?", tools: "Example: how a rice cooker knows when rice is done",
+    methods: "Example: what blanching does to vegetables" })[id] || "Example: how bagels get their shine";
+}
+
+/* lesson */
+function openLesson(stall, topic, stallName){
+  show({ furniture: stall, render(d){
+    setBar(stallName, "lesson");
+    if (this.data) return renderLesson(d, this.data, stall, stallName);
+    const view = this;
+    const box = loadingEl("Mr. Paul is cooking up your lesson and checking the sources…");
+    d.append(box); cooking(true);
+    api({ mode: "lesson", stall, topic }).then(r => {
+      cooking(false);
+      if (!d.contains(box)) return;
+      box.remove();
+      if (!r.ok) { d.append(el("div", { class: "err", text: r.intro })); return; }
+      view.data = r;
+      renderLesson(d, r, stall, stallName);
+    }).catch(e => { cooking(false); box.replaceWith(el("div", { class: "err", text: e.message })); });
+  }});
+  syncFurniture();
+}
+function renderLesson(d, r, stall, stallName){
+  state.lesson = r;
+  d.append(el("p", { class: "kicker", text: stallName }), el("h2", { text: r.title }));
+  if (r.wiki) d.append(photoFig(r.wiki));
+  d.append(el("p", { class: "lead", text: r.intro }));
+  (r.sections || []).forEach(s => d.append(el("h3", { text: s.heading }), el("p", { text: s.text })));
+  if (r.wow) d.append(el("div", { class: "box wow" }, el("b", { class: "t", text: "🤯 Wow...Who Knew?" }), r.wow));
+  if (r.kitchen) d.append(el("div", { class: "box kit" }, el("b", { class: "t", text: "🍳 In Your Kitchen" }), r.kitchen));
+  if (r.health) d.append(el("div", { class: "box note", text: r.health }));
+  const actions = el("div", { class: "row" });
+  if (r.recipeIdea) actions.append(el("button", { class: "btn", type: "button", onclick: () => openRecipe(r.recipeIdea) }, "📒 Starter Recipe: " + r.recipeIdea));
+  const eyesWrap = el("div", {});
+  actions.append(el("button", { class: "btn ghost", type: "button", onclick: () => { eyesWrap.innerHTML = ""; eyesWrap.append(eyesPanel(r)); } }, "👀 Another Set of AI Eyes"));
+  d.append(actions, eyesWrap);
+  if (r.followups && r.followups.length) {
+    d.append(el("h3", { text: "Keep exploring" }), el("div", { class: "chips" }, r.followups.map(q => el("button", { class: "chip alt", type: "button", onclick: () => openAnswer(q, r.title) }, q))));
+  }
+  d.append(footnotes(r.sources), askBar(r.title));
+}
+function footnotes(sources){
+  if (!sources || !sources.length) return el("span", {});
+  return el("div", { class: "fn" }, el("b", { text: "Sources Mr. Paul checked" }),
+    el("ol", {}, sources.map(s => el("li", {}, el("a", { href: s.url, target: "_blank", rel: "noopener", text: s.title || s.url })))));
+}
+
+/* ask */
+function askBar(context){
+  const inp = el("input", { type: "text", id: "askIn", maxlength: "400", autocomplete: "off" });
+  const go = () => { const q = inp.value.trim(); if (q) openAnswer(q, context); };
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+  return el("div", { class: "field askbar" },
+    el("label", { for: "askIn", text: "👨‍🍳 Ask Mr. Paul anything about food:" }),
+    el("span", { class: "ex", text: "Example: why do we put salt in pasta water?" }),
+    el("div", { class: "inrow" }, inp, el("button", { class: "btn", type: "button", onclick: go }, "Ask")));
+}
+function openAnswer(question, context){
+  show({ furniture: state.view && state.view.furniture, render(d){
+    setBar("Ask Mr. Paul", "answer");
+    d.append(el("p", { class: "kicker", text: "You asked" }), el("h2", { text: question }));
+    const view = this;
+    const box = loadingEl("Mr. Paul is checking the sources…");
+    d.append(box);
+    if (!view.data) cooking(true, "Mr. Paul is looking that up…");
+    (view.data ? Promise.resolve(view.data) : api({ mode: "ask", question, context })).then(r => {
+      view.data = r;
+      cooking(false); box.remove();
+      if (r.confirmed && r.wiki) d.append(photoFig(r.wiki));
+      String(r.answer || "").split(/\n+/).filter(Boolean).forEach(p => d.append(el("p", { class: r.confirmed ? "" : "err", text: p })));
+      if (r.health) d.append(el("div", { class: "box note", text: r.health }));
+      d.append(footnotes(r.sources), askBar(context));
+    }).catch(e => { cooking(false); box.replaceWith(el("div", { class: "err", text: e.message })); });
+  }});
+}
+
+/* recipe */
+function openRecipe(dish){
+  show({ furniture: "recipes", render(d){
+    setBar("Starter Recipes", "recipe");
+    const view = this;
+    const box = loadingEl("Mr. Paul is writing up a simple recipe…");
+    d.append(box);
+    if (!view.data) cooking(true, "Mr. Paul is preheating the oven…");
+    (view.data ? Promise.resolve(view.data) : api({ mode: "recipe", dish })).then(r => {
+      view.data = r;
+      cooking(false); box.remove();
+      if (!r.ok) { d.append(el("div", { class: "err", text: r.intro })); return; }
+      const wrap = el("div", { class: "recipe" });
+      wrap.append(el("p", { class: "kicker", text: "From the Kitchen Shelf" }), el("h2", { text: r.title }));
+      if (r.wiki) wrap.append(photoFig(r.wiki));
+      wrap.append(el("p", { class: "lead", text: r.intro }), el("div", { class: "meta" }, r.serves ? "🍽️ Serves " + r.serves : "", r.time ? "⏱️ " + r.time : ""),
+        el("h3", { text: "Ingredients" }), el("ul", {}, (r.ingredients || []).map(x => el("li", { text: x }))),
+        el("h3", { text: "Steps" }), el("ol", {}, (r.steps || []).map(x => el("li", { text: x }))));
+      if (r.learn) wrap.append(el("div", { class: "box wow" }, el("b", { class: "t", text: "🤯 The Food Lesson Inside" }), r.learn));
+      wrap.append(el("div", { class: "box allergy", text: r.allergy || "Allergy check: read every ingredient label." }),
+        el("p", { class: "ex", text: "A simple home version from Mr. Paul's Kitchen Shelf. The Food Hall is for learning about food, so recipes are starters, not a cookbook." }));
+      d.append(wrap, askBar(r.title));
+    }).catch(e => { cooking(false); box.replaceWith(el("div", { class: "err", text: e.message })); });
+  }});
+  syncFurniture();
+}
+
+/* another set of AI eyes */
+function eyesPanel(r){
+  const prompt = "Teach me about this food topic in a few short paragraphs, with your sources: " + r.title;
+  const copyBtn = el("button", { class: "btn green", type: "button" }, "Copy the Question");
+  copyBtn.onclick = async () => { try { await navigator.clipboard.writeText(prompt); copyBtn.textContent = "Copied!"; } catch(e){ copyBtn.textContent = "Select and copy the line above"; } };
+  const ta = el("textarea", { id: "eyesIn", maxlength: "5000" });
+  const out = el("div", {});
+  const cmp = el("button", { class: "btn", type: "button" }, "Compare");
+  cmp.onclick = async () => {
+    const other = ta.value.trim(); if (!other) return;
+    cmp.disabled = true; out.innerHTML = ""; out.append(loadingEl("Mr. Paul is comparing the two…")); cooking(true, "Mr. Paul is comparing notes…");
+    try {
+      const text = [r.intro, ...(r.sections || []).map(s => s.heading + ": " + s.text), r.wow].join("\n");
+      const c = await api({ mode: "compare", other, lesson: { title: r.title, text } });
+      const label = { matches: "✅ They match", partly: "🟡 They partly match", differs: "⚠️ They differ" }[c.agreement] || "🟡 They partly match";
+      out.innerHTML = "";
+      out.append(el("p", { class: "agree", text: label }), el("p", { text: c.summary }));
+      if (c.differences && c.differences.length) out.append(el("ul", {}, c.differences.map(x => el("li", { text: x }))));
+      out.append(footnotes(c.sources));
+    } catch(e){ out.innerHTML = ""; out.append(el("div", { class: "err", text: e.message })); }
+    cooking(false); cmp.disabled = false;
+  };
+  return el("div", { class: "box eyes" },
+    el("b", { class: "t", text: "👀 Another Set of AI Eyes" }),
+    el("p", { text: "Want a second opinion? Ask another AI (like ChatGPT or Gemini) and Mr. Paul will compare the answers against real sources." }),
+    el("p", { class: "ex", text: "Step 1: Copy this question and paste it into the other AI:" }),
+    el("p", { style: "font-weight:700;background:#fff;border-radius:10px;padding:10px 12px", text: prompt }), copyBtn,
+    el("div", { class: "field" }, el("label", { for: "eyesIn", text: "Step 2: Paste its answer here:" }), ta),
+    el("div", { class: "row" }, cmp), out);
+}
+
+/* ---------- build the kitchen ---------- */
+function buildCabinets(){
+  const wrap = $("#cabinets");
+  STALLS.forEach(s => {
+    const cab = el("div", { class: "cab", "data-id": s.id },
+      el("div", { class: "inside" }, [...s.inside].filter(ch => ch.trim()).length ? Array.from(s.inside.matchAll(/\p{Extended_Pictographic}/gu), m => el("span", { text: m[0] })) : ""),
+      el("button", { class: "door", type: "button", "aria-label": "Open the " + s.name + " stall", onclick: () => { show(stallView(s.id)); syncFurniture(); } },
+        el("span", { class: "ico", text: s.ico }), el("span", { class: "lab", text: s.name })));
+    wrap.append(cab);
+  });
+  wrap.append(el("div", { class: "cab deco", "aria-hidden": "true" }, el("div", { class: "inside" }, ["🫙","🍯","🧄"].map(x => el("span", { text: x })))));
+  document.querySelectorAll(".drawer").forEach(dr => dr.addEventListener("click", () => { show(stallView(dr.dataset.shelf)); syncFurniture(); }));
+}
+function buildLevel(){
+  const btns = document.querySelectorAll(".lvl button");
+  const paint = () => btns.forEach(b => b.classList.toggle("on", b.dataset.lvl === state.level));
+  btns.forEach(b => b.addEventListener("click", () => { state.level = b.dataset.lvl; store.set("fh_level", state.level); paint(); }));
+  paint();
+}
+
+buildLevel();
+buildBanner();
+buildCabinets();
+show(homeView(), false);
+</script>
+</body>
+</html>

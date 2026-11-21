@@ -86,10 +86,16 @@ Reply with ONLY this JSON inside <json></json>:
   }
   if (mode === "catalog") {
     const item = String(b.item || "").slice(0, 120);
+    const clar = b.clarification ? `The visitor already clarified: "${String(b.clarification).slice(0, 200)}". Do NOT ask again; write the report for that meaning.` : "";
     return `Food & Drink Catalog request: "${item}"
+${clar}
 ${lvl}
-Research this food or drink with web search and write its catalog report. If it is not a food or drink, set "ok" to false with a kind one-sentence note in "overview". If it is an alcoholic drink and the reading level is "kids", set "ok" to false with the note "That one is a grown-up drink. Switch to Grown-Ups to see its catalog page."
-Only list brand names, dates and places your sources support. Leave a field as an empty string or empty list rather than guess.
+STEP 1, CLARIFY ONLY IF TRULY NEEDED: if this name could clearly mean two or more quite different foods or drinks (e.g. "chips" = potato chips or British fries, "biscuit" = US biscuit or UK cookie, "cider" = apple juice cider or hard cider, "pudding"), and no clarification was given, do NOT write the report. Reply with ONLY:
+<json>{"clarify": true, "question": "one short friendly question", "options": ["2-4 short choices"]}</json>
+Do not ask about things the report can simply cover (like the different types of coffee); those go in the report.
+
+STEP 2, THE REPORT: research it with web search (use several searches) and write a rich, detailed catalog report. If it is not a food or drink, set "ok" to false with a kind one-sentence note in "overview". If it is an alcoholic drink and the reading level is "kids", set "ok" to false with the note "That one is a grown-up drink. Switch to Grown-Ups to see its catalog page."
+Only list brand names, dates, numbers and places your sources support. Leave a field empty rather than guess.
 Reply with ONLY this JSON inside <json></json>:
 {"ok": true,
  "name": "the food or drink's proper name",
@@ -97,15 +103,19 @@ Reply with ONLY this JSON inside <json></json>:
  "origin": "where it comes from (country or region)",
  "firstMade": "when it first appeared, if known (e.g. 'Early 1800s'), or empty",
  "alcohol": false,
- "overview": "2-3 sentences: what it is",
- "history": "2-4 sentences on its origin and history (say so when a famous story is a legend)",
- "types": [{"name": "type or variety", "note": "one short line"}],          // up to 6
- "brands": ["famous brand names, with country in parentheses"],          // up to 6
- "howMade": ["step 1", "step 2"],                                          // 4-7 short steps, commercial process
- "ingredients": ["main ingredients"],                                       // up to 8
- "versions": [{"place": "country or region", "name": "local version", "note": "one short line"}],  // up to 5
- "nutrition": "1-2 sentences of general nutrition facts per typical serving, or empty",
- "wow": "one surprising, sourced fact",
+ "overview": "4-6 sentences: what it is, what makes it distinctive, and why people love it",
+ "history": ["3 short paragraphs (3-4 sentences each) telling its origin and history, including how it spread and changed; say so when a famous story is a legend"],
+ "types": [{"name": "type or variety", "note": "1-2 sentences"}],          // 6-10
+ "brands": ["famous brand names, with country in parentheses"],          // up to 10
+ "howMade": ["detailed step, 1-2 sentences each"],                          // 6-10 steps, commercial process
+ "ingredients": [{"name": "ingredient", "role": "what it does in this food or drink"}],   // up to 12
+ "versions": [{"place": "country or region", "name": "local version", "note": "1-2 sentences"}],  // 5-8
+ "enjoy": "3-4 sentences on how people around the world serve, eat or drink it, and classic pairings",
+ "buying": "3-4 sentences on how to choose it, read its label, and store it (include food-safety storage facts where relevant)",
+ "nutrition": "2-4 sentences of general nutrition facts per typical serving, or empty",
+ "facts": ["3 surprising, sourced fun facts"],
+ "wow": "the single most surprising sourced fact",
+ "followups": ["4 short questions a curious reader might ask next about it"],
  "wiki": "exact English Wikipedia article title that best pictures it",
  ${sourcesShape}}`;
   }
@@ -115,7 +125,7 @@ Reply with ONLY this JSON inside <json></json>:
     return `${ctx}
 Visitor's question about food: "${q}"
 ${lvl}
-Research it with web search, then answer in 1-3 short paragraphs. If it isn't about food or you can't confirm it, set "confirmed" to false and say so kindly.
+Research it with web search, then answer in 1-3 short paragraphs. If the question could mean two quite different things, answer the most likely meaning and end with one short question asking which they meant. If it isn't about food or you can't confirm it, set "confirmed" to false and say so kindly.
 Reply with ONLY this JSON inside <json></json>:
 {"confirmed": true, "answer": "...", "wiki": "best English Wikipedia article title to picture the answer, or empty", ${sourcesShape}}`;
   }
@@ -310,7 +320,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    const searches = mode === "lesson" || mode === "catalog" ? 6 : mode === "compare" ? 5 : 4;
+    const searches = mode === "catalog" ? 8 : mode === "lesson" ? 6 : mode === "compare" ? 5 : 4;
     const { text, retrieved } = await callClaude(prompt, searches);
     const j = extractJson(text) || {};
     const sources = verifySources(j.sources, retrieved);
@@ -329,16 +339,23 @@ module.exports = async (req, res) => {
     }
 
     if (mode === "catalog") {
+      if (j.clarify === true && !b.clarification) {
+        return res.status(200).json({ ok: false, clarify: true, question: clip(j.question, 200) || "Which one do you mean?", options: clipList(j.options, 4, 80) });
+      }
       if (j.ok === false) return res.status(200).json({ ok: false, overview: clip(j.overview, 400) || "The catalog only covers foods and drinks. Try another one!" });
       if (!sources.length) return res.status(200).json({ ok: false, overview: NOT_CONFIRMED[level] });
-      const nutrition = clip(j.nutrition, 500);
+      const nutrition = clip(j.nutrition, 800);
+      const pairs = (arr, n, f) => (Array.isArray(arr) ? arr : []).slice(0, n).map(f).filter(x => x.name);
       return res.status(200).json({
         ok: true, name: clip(j.name, 120), category: clip(j.category, 60), origin: clip(j.origin, 120), firstMade: clip(j.firstMade, 80),
-        overview: clip(j.overview, 700), history: clip(j.history, 1000),
-        types: (Array.isArray(j.types) ? j.types : []).slice(0, 6).map(t => ({ name: clip(t && t.name, 80), note: clip(t && t.note, 200) })).filter(t => t.name),
-        brands: clipList(j.brands, 6, 100), howMade: clipList(j.howMade, 7, 300), ingredients: clipList(j.ingredients, 8, 100),
-        versions: (Array.isArray(j.versions) ? j.versions : []).slice(0, 5).map(v => ({ place: clip(v && v.place, 60), name: clip(v && v.name, 80), note: clip(v && v.note, 200) })).filter(v => v.name),
-        nutrition, wow: clip(j.wow, 400), wiki: clip(j.wiki, 120),
+        overview: clip(j.overview, 1200),
+        history: Array.isArray(j.history) ? clipList(j.history, 4, 1000) : clipList([j.history], 1, 1800),
+        types: pairs(j.types, 10, t => ({ name: clip(t && t.name, 80), note: clip(t && t.note, 300) })),
+        brands: clipList(j.brands, 10, 100), howMade: clipList(j.howMade, 10, 400),
+        ingredients: pairs(j.ingredients, 12, x => typeof x === "string" ? { name: clip(x, 100), role: "" } : { name: clip(x && x.name, 100), role: clip(x && x.role, 200) }),
+        versions: pairs(j.versions, 8, v => ({ place: clip(v && v.place, 60), name: clip(v && v.name, 80), note: clip(v && v.note, 300) })),
+        enjoy: clip(j.enjoy, 900), buying: clip(j.buying, 900), nutrition, facts: clipList(j.facts, 3, 400),
+        wow: clip(j.wow, 400), followups: clipList(j.followups, 4, 140), wiki: clip(j.wiki, 120),
         alcohol: j.alcohol === true ? "Alcoholic drink: for adults of legal drinking age only. Please enjoy responsibly." : "",
         health: nutrition ? HEALTH_NOTE : "", sources
       });

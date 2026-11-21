@@ -405,7 +405,13 @@ function show(view, push = true){
     el("button", { class: "back", type: "button", onclick: goBack }, "← Back"),
     el("button", { class: "back", type: "button", onclick: goHome }, "🏠 Food Hall Home")));
   view.render(display);
-  if (push) display.closest(".screen").scrollIntoView({ behavior: "smooth", block: "start" });
+  if (push) scrollToScreen();
+}
+function scrollToScreen(){
+  const scr = display.closest(".screen");
+  if (window.parent !== window) {
+    try { window.parent.postMessage({ lwToolScrollY: Math.max(0, scr.getBoundingClientRect().top + window.scrollY - 10) }, "*"); } catch(e){}
+  } else scr.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 function goBack(){ const v = state.stack.pop(); if (v) show(v, false); syncFurniture(); }
 function goHome(){ state.stack = []; show(homeView(), false); syncFurniture(); }
@@ -704,6 +710,20 @@ buildLevel();
 buildBanner();
 buildCabinets();
 show(homeView(), false);
+
+/* tell the website page how tall the tool is, so there is no inner scroll bar */
+(function(){
+  if (window.parent === window) return;
+  let last = 0;
+  const send = () => {
+    const h = Math.ceil(document.body.getBoundingClientRect().height) + 20;
+    if (Math.abs(h - last) > 4) { last = h; try { window.parent.postMessage({ lwToolHeight: h }, "*"); } catch(e){} }
+  };
+  if (window.ResizeObserver) new ResizeObserver(send).observe(document.body);
+  window.addEventListener("load", send);
+  setInterval(send, 1500);
+  send();
+})();
 </script>
 </body>
 </html>

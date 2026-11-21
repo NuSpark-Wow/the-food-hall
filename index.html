@@ -119,7 +119,7 @@ a{color:#a8341d}
 .howto{text-align:center;color:var(--soft);font-weight:700;margin:0 0 12px}
 
 /* upper cabinets */
-.cabinets{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;background:var(--cab-dk);padding:10px;border-radius:10px 10px 0 0;box-shadow:0 6px 0 #2f4537}
+.cabinets{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;background:var(--cab-dk);padding:10px;border-radius:10px 10px 0 0;box-shadow:0 6px 0 #2f4537}
 .cab{perspective:700px;position:relative;height:150px;border-radius:6px;background:#efe6d6;overflow:hidden;box-shadow:inset 0 0 0 2px #2f4537}
 .cab .inside{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-around;align-items:center;padding:8px 4px;background:repeating-linear-gradient(#efe6d6 0 44px,#d8c7a8 44px 48px)}
 .cab .inside span{font-size:24px;line-height:1}
@@ -127,10 +127,9 @@ a{color:#a8341d}
 .cab .door:hover{filter:brightness(1.06)}
 .cab .door:focus-visible{outline:3px solid var(--brass-lt);outline-offset:-3px}
 .cab .door .ico{font-size:34px;line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
-.cab .door .lab{font-weight:800;font-size:14px;line-height:1.2;text-align:center;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.cab .door .lab{font-weight:800;font-size:13.5px;line-height:1.2;text-align:center;text-shadow:0 1px 2px rgba(0,0,0,.35)}
 .cab .door::after{content:"";position:absolute;right:10px;top:50%;width:7px;height:30px;margin-top:-15px;border-radius:4px;background:linear-gradient(var(--brass-lt),var(--brass));box-shadow:0 1px 2px rgba(0,0,0,.4)}
 .cab.deco{display:none;background:linear-gradient(160deg,#cfe0e6,#a9c3cc);box-shadow:inset 0 0 0 6px var(--cab),inset 0 0 0 8px #2f4537}.cab.deco .inside{background:repeating-linear-gradient(rgba(255,255,255,.25) 0 44px,#d8c7a8 44px 48px)}
-@media(max-width:860px){.cab.deco{display:block}}
 .cab.open .door{transform:rotateY(-78deg);box-shadow:8px 0 14px rgba(0,0,0,.35)}
 @media(max-width:860px){.cabinets{grid-template-columns:repeat(4,1fr)}.cab{height:120px}.cab:nth-child(n+5){grid-column:auto}}
 @media(max-width:520px){.cabinets{grid-template-columns:repeat(4,1fr);gap:6px;padding:8px}.cab{height:96px}.cab .door{padding:8px 14px 8px 4px}.cab .door::after{right:5px;width:5px;height:22px;margin-top:-11px}.cab .door .ico{font-size:26px}.cab .door .lab{font-size:11.5px}.backsplash{padding:14px 8px}.screen{padding:8px}.screen #barRight{display:none}.display{padding:18px 14px}}
@@ -190,6 +189,17 @@ a{color:#a8341d}
 .agree{font-weight:900;font-size:18px}
 .eyes{background:#f5f1fb;border:2px solid #d8cdee}
 .askbar{border-top:2px dashed #e5d9c4;margin-top:22px;padding-top:6px}
+
+/* catalog report */
+.facts{clear:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:6px 0 14px}
+.fact{background:#f6efe3;border-radius:10px;padding:8px 12px}
+.fact small{display:block;font-size:11.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--soft)}
+.fact span{font-weight:800;color:var(--navy)}
+.cat-list{padding-left:22px;font-size:17px;margin:4px 0 8px}
+.cat-list li{margin:4px 0}
+.brands{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0}
+.brand{background:var(--navy);color:#fff;font-weight:800;font-size:14.5px;padding:6px 12px;border-radius:8px}
+.cab.catalog .door{background:linear-gradient(160deg,#d8694f,var(--tomato))}
 
 /* counter + range + drawers */
 .counter{height:22px;background:linear-gradient(var(--wood),var(--wood-dk));border-radius:4px;box-shadow:0 4px 0 #6d4a26}
@@ -282,6 +292,7 @@ footer p{margin:6px 0}
 <script>
 /* ---------- data ---------- */
 const STALLS = [
+  { id: "catalog", ico: "📖", name: "Food & Drink Catalog", inside: "🧀🍷☕", catalog: true },
   { id: "origins", ico: "🌾", name: "Where It Comes From", blurb: "Farms, oceans, orchards and factories: how food is grown, raised, caught or made, and how it gets to your store.", inside: "🌽🐄🐟",
     topics: ["How chocolate goes from bean to bar","Where vanilla really comes from","How rice is grown","How maple syrup is made","Where cinnamon comes from","How cheese is made","The journey of a banana to your store","How salt is harvested","How coffee is grown and roasted","How honey is made","How olive oil is pressed","How wheat becomes flour"] },
   { id: "ingredients", ico: "🧂", name: "Ingredients", blurb: "What's really in your food, what each ingredient does, and why it's there.", inside: "🧈🥚🧂",
@@ -305,8 +316,9 @@ const SHELF = {
   recipes: { ico: "📒", name: "Starter Recipes", blurb: "Simple home recipes that go with what you're learning. Pick one, or type in any dish.",
     topics: ["Simple homemade butter","Easy guacamole","No-knead bread","Slow, creamy scrambled eggs","Stovetop popcorn","Simple tomato sauce","Overnight oats","Easy fried rice","Fresh lemonade","Basic vinaigrette","Banana bread","Quick pickled cucumbers"] }
 };
+const CATALOG_PICKS = ["Coffee","Cheddar cheese","Sriracha","Champagne","Maple syrup","Bourbon","Kimchi","Root beer","Parmesan","Tequila","Peanut butter","Green tea","Sourdough bread","Hot dogs","Olive oil","Ketchup","Avocado","Chocolate"];
 const BANNER = ["Tomato","Bread","Sushi","Spice","Cheese","Honey","Pasta","Strawberry","Rice","Coffee"];
-const BAR_RIGHT = { home: "Now Serving: Curiosity", stall: "Pick a Topic", lesson: "Fresh Lesson", recipe: "From the Kitchen Shelf", answer: "Answer Served" };
+const BAR_RIGHT = { home: "Now Serving: Curiosity", stall: "Pick a Topic", lesson: "Fresh Lesson", recipe: "From the Kitchen Shelf", answer: "Answer Served", catalog: "Catalog Report" };
 
 /* ---------- helpers ---------- */
 const $ = s => document.querySelector(s);
@@ -414,9 +426,9 @@ function homeView(){
     setBar("The Food Hall", "home");
     d.append(el("p", { class: "kicker", text: "Welcome in" }),
       el("h2", { text: "What are we learning about today?" }),
-      el("p", { class: "lead", text: "Each cabinet up top is a stall in the Food Hall. Open one to pick a topic, and Mr. Paul will serve up a lesson checked against real sources. Kitchen tools, cooking methods and starter recipes live in the drawers below." }),
+      el("p", { class: "lead", text: "Each cabinet up top is a stall in the Food Hall. Open one to pick a topic, and Mr. Paul will serve up a lesson checked against real sources. Want the full story on one food or drink? Open the Food & Drink Catalog. Kitchen tools, cooking methods and starter recipes live in the drawers below." }),
       el("h3", { text: "Today's Specials" }));
-    const specials = shuffle(STALLS).slice(0, 4).map(s => ({ s, t: shuffle(s.topics)[0] }));
+    const specials = shuffle(STALLS.filter(x => x.topics)).slice(0, 4).map(s => ({ s, t: shuffle(s.topics)[0] }));
     d.append(el("div", { class: "chips" }, specials.map(({ s, t }) => el("button", { class: "chip", type: "button", onclick: () => openLesson(s.id, t, s.name) }, s.ico + " " + t))));
     d.append(askBar());
   }};
@@ -468,12 +480,69 @@ function exampleFor(id){
     methods: "Example: what blanching does to vegetables" })[id] || "Example: how bagels get their shine";
 }
 
+/* food & drink catalog */
+function catalogView(){
+  return { furniture: "catalog", render(d){
+    setBar("Food & Drink Catalog", "stall");
+    d.append(el("p", { class: "kicker", text: "Stall" }), el("h2", { text: "📖 Food & Drink Catalog" }),
+      el("p", { class: "lead", text: "Enter any food or drink and get its full catalog report: what it is, where it comes from, its types, famous brands, how it's made, what's in it, and versions around the world." }));
+    const inp = el("input", { type: "text", id: "catIn", maxlength: "120", autocomplete: "off" });
+    const go = () => { const v = inp.value.trim(); if (v) openCatalog(v); };
+    inp.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+    d.append(el("div", { class: "field" },
+      el("label", { for: "catIn", text: "Enter a food or drink:" }),
+      el("span", { class: "ex", text: "Examples: mozzarella, ginger ale, sushi rice, Irish whiskey" }),
+      el("div", { class: "inrow" }, inp, el("button", { class: "btn", type: "button", onclick: go }, "Look It Up"))),
+      el("h3", { text: "Or browse a few" }),
+      el("div", { class: "chips" }, shuffle(CATALOG_PICKS).slice(0, 8).map(t => el("button", { class: "chip", type: "button", onclick: () => openCatalog(t) }, t))));
+  }};
+}
+function openCatalog(item){
+  show({ furniture: "catalog", render(d){
+    setBar("Food & Drink Catalog", "catalog");
+    const view = this;
+    const box = loadingEl("Mr. Paul is pulling the catalog file and checking the sources…");
+    d.append(box);
+    if (!view.data) cooking(true, "Mr. Paul is pulling the catalog file…");
+    (view.data ? Promise.resolve(view.data) : api({ mode: "catalog", item })).then(r => {
+      view.data = r;
+      cooking(false); box.remove();
+      if (!r.ok) { d.append(el("div", { class: "err", text: r.overview })); return; }
+      renderCatalog(d, r);
+    }).catch(e => { cooking(false); box.replaceWith(el("div", { class: "err", text: e.message })); });
+  }});
+  syncFurniture();
+}
+function renderCatalog(d, r){
+  d.append(el("p", { class: "kicker", text: "Food & Drink Catalog" }), el("h2", { text: r.name }));
+  if (r.wiki) d.append(photoFig(r.wiki));
+  const facts = [["Category", r.category], ["Origin", r.origin], ["First made", r.firstMade]].filter(f => f[1]);
+  if (facts.length) d.append(el("div", { class: "facts" }, facts.map(([k, v]) => el("div", { class: "fact" }, el("small", { text: k }), el("span", { text: v })))));
+  if (r.alcohol) d.append(el("div", { class: "box note", style: "clear:none", text: r.alcohol }));
+  const sec = (title, node) => { if (node) d.append(el("h3", { text: title }), node); };
+  sec("Overview", r.overview && el("p", { class: "lead", text: r.overview }));
+  sec("Origin & History", r.history && el("p", { text: r.history }));
+  sec("Types & Varieties", r.types && r.types.length && el("ul", { class: "cat-list" }, r.types.map(t => el("li", {}, el("b", { text: t.name }), t.note ? ": " + t.note : ""))));
+  sec("Famous Brands", r.brands && r.brands.length && el("div", {}, el("div", { class: "brands" }, r.brands.map(b => el("span", { class: "brand", text: b }))), el("p", { class: "ex", text: "Brand names are shown for learning only, not as endorsements." })));
+  sec("How It's Made", r.howMade && r.howMade.length && el("ol", { class: "cat-list" }, r.howMade.map(x => el("li", { text: x }))));
+  sec("Main Ingredients", r.ingredients && r.ingredients.length && el("ul", { class: "cat-list" }, r.ingredients.map(x => el("li", { text: x }))));
+  sec("Versions Around the World", r.versions && r.versions.length && el("ul", { class: "cat-list" }, r.versions.map(v => el("li", {}, el("b", { text: v.name }), v.place ? " (" + v.place + ")" : "", v.note ? ": " + v.note : ""))));
+  sec("Nutrition Snapshot", r.nutrition && el("p", { text: r.nutrition }));
+  if (r.health) d.append(el("div", { class: "box note", text: r.health }));
+  if (r.wow) d.append(el("div", { class: "box wow" }, el("b", { class: "t", text: "🤯 Wow...Who Knew?" }), r.wow));
+  const eyesWrap = el("div", {});
+  const lessonLike = { title: r.name + " (" + (r.category || "food") + ")", intro: r.overview, sections: [{ heading: "History", text: r.history }, { heading: "How it's made", text: (r.howMade || []).join(" ") }], wow: r.wow };
+  d.append(el("div", { class: "row" },
+    el("button", { class: "btn green", type: "button", onclick: () => show(catalogView()) }, "📖 Look Up Another"),
+    el("button", { class: "btn ghost", type: "button", onclick: () => { eyesWrap.innerHTML = ""; eyesWrap.append(eyesPanel(lessonLike)); } }, "👀 Another Set of AI Eyes")), eyesWrap);
+  d.append(footnotes(r.sources), askBar(r.name));
+}
+
 /* lesson */
 function openLesson(stall, topic, stallName){
   show({ furniture: stall, render(d){
     setBar(stallName, "lesson");
-    if (this.data) return renderLesson(d, this.data, stall, stallName);
-    const view = this;
+    if (state.lessonCache && state.lessonCache.key === stall + "|" + topic + "|" + state.level) return renderLesson(d, state.lessonCache.data, stall, stallName);
     const box = loadingEl("Mr. Paul is cooking up your lesson and checking the sources…");
     d.append(box); cooking(true);
     api({ mode: "lesson", stall, topic }).then(r => {
@@ -481,7 +550,7 @@ function openLesson(stall, topic, stallName){
       if (!d.contains(box)) return;
       box.remove();
       if (!r.ok) { d.append(el("div", { class: "err", text: r.intro })); return; }
-      view.data = r;
+      state.lessonCache = { key: stall + "|" + topic + "|" + state.level, data: r };
       renderLesson(d, r, stall, stallName);
     }).catch(e => { cooking(false); box.replaceWith(el("div", { class: "err", text: e.message })); });
   }});
@@ -518,7 +587,7 @@ function askBar(context){
   const go = () => { const q = inp.value.trim(); if (q) openAnswer(q, context); };
   inp.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
   return el("div", { class: "field askbar" },
-    el("label", { for: "askIn", text: "👨‍🍳 Ask Mr. Paul anything about food:" }),
+    el("label", { for: "askIn", text: "👨‍🍳 Ask Mr. Paul anything about food or drink:" }),
     el("span", { class: "ex", text: "Example: why do we put salt in pasta water?" }),
     el("div", { class: "inrow" }, inp, el("button", { class: "btn", type: "button", onclick: go }, "Ask")));
 }
@@ -526,12 +595,9 @@ function openAnswer(question, context){
   show({ furniture: state.view && state.view.furniture, render(d){
     setBar("Ask Mr. Paul", "answer");
     d.append(el("p", { class: "kicker", text: "You asked" }), el("h2", { text: question }));
-    const view = this;
     const box = loadingEl("Mr. Paul is checking the sources…");
-    d.append(box);
-    if (!view.data) cooking(true, "Mr. Paul is looking that up…");
-    (view.data ? Promise.resolve(view.data) : api({ mode: "ask", question, context })).then(r => {
-      view.data = r;
+    d.append(box); cooking(true, "Mr. Paul is looking that up…");
+    api({ mode: "ask", question, context }).then(r => {
       cooking(false); box.remove();
       if (r.confirmed && r.wiki) d.append(photoFig(r.wiki));
       String(r.answer || "").split(/\n+/).filter(Boolean).forEach(p => d.append(el("p", { class: r.confirmed ? "" : "err", text: p })));
@@ -545,12 +611,9 @@ function openAnswer(question, context){
 function openRecipe(dish){
   show({ furniture: "recipes", render(d){
     setBar("Starter Recipes", "recipe");
-    const view = this;
     const box = loadingEl("Mr. Paul is writing up a simple recipe…");
-    d.append(box);
-    if (!view.data) cooking(true, "Mr. Paul is preheating the oven…");
-    (view.data ? Promise.resolve(view.data) : api({ mode: "recipe", dish })).then(r => {
-      view.data = r;
+    d.append(box); cooking(true, "Mr. Paul is preheating the oven…");
+    api({ mode: "recipe", dish }).then(r => {
       cooking(false); box.remove();
       if (!r.ok) { d.append(el("div", { class: "err", text: r.intro })); return; }
       const wrap = el("div", { class: "recipe" });
@@ -603,13 +666,13 @@ function eyesPanel(r){
 function buildCabinets(){
   const wrap = $("#cabinets");
   STALLS.forEach(s => {
-    const cab = el("div", { class: "cab", "data-id": s.id },
+    const cab = el("div", { class: "cab" + (s.catalog ? " catalog" : ""), "data-id": s.id },
       el("div", { class: "inside" }, [...s.inside].filter(ch => ch.trim()).length ? Array.from(s.inside.matchAll(/\p{Extended_Pictographic}/gu), m => el("span", { text: m[0] })) : ""),
-      el("button", { class: "door", type: "button", "aria-label": "Open the " + s.name + " stall", onclick: () => { show(stallView(s.id)); syncFurniture(); } },
+      el("button", { class: "door", type: "button", "aria-label": "Open the " + s.name + " stall", onclick: () => { show(s.catalog ? catalogView() : stallView(s.id)); syncFurniture(); } },
         el("span", { class: "ico", text: s.ico }), el("span", { class: "lab", text: s.name })));
     wrap.append(cab);
   });
-  wrap.append(el("div", { class: "cab deco", "aria-hidden": "true" }, el("div", { class: "inside" }, ["🫙","🍯","🧄"].map(x => el("span", { text: x })))));
+
   document.querySelectorAll(".drawer").forEach(dr => dr.addEventListener("click", () => { show(stallView(dr.dataset.shelf)); syncFurniture(); }));
 }
 function buildLevel(){

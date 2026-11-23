@@ -168,6 +168,7 @@ a{color:#a8341d}
 .photo figcaption{font-size:12px;color:var(--soft);padding:5px 8px}
 @media(max-width:620px){.photo{float:none;width:100%;margin:0 0 14px}}
 .box{clear:both;border-radius:14px;padding:14px 16px;margin:16px 0}
+.box.taste{background:#fff4ec;border:2px solid #f3c7a6}.taste .tw{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.taste svg{width:230px;max-width:100%;flex:none}.taste .tx{flex:1;min-width:200px}.taste ul{margin:6px 0 0;padding-left:18px}
 .box b.t{display:block;font-size:13px;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:4px}
 .wow{background:#fff4d6;border:2px dashed var(--brass)}
 .wow b.t{color:#8a6510}
@@ -530,6 +531,25 @@ function renderClarify(d, item, r){
   d.append(el("div", { class: "field" }, el("label", { for: "clarIn", text: "Or tell Mr. Paul what you mean:" }),
     el("div", { class: "inrow" }, inp, el("button", { class: "btn", type: "button", onclick: go }, "Go"))));
 }
+// Taste Science: a five-tastes wheel (sweet, salty, sour, bitter, umami, each 0-5) plus the science of why pairings work.
+function tasteBox(t){
+  if (!t) return null;
+  const keys = [["sweet","Sweet","#e85d9a"],["salty","Salty","#3b82f6"],["sour","Sour","#eab308"],["bitter","Bitter","#16a34a"],["umami","Umami","#9a5b2f"]];
+  const cx = 120, cy = 118, R = 80, pt = (i, v) => { const a = -Math.PI / 2 + i * 2 * Math.PI / 5; return [cx + Math.cos(a) * R * v / 5, cy + Math.sin(a) * R * v / 5]; };
+  let g = "";
+  [1,2,3,4,5].forEach(v => { g += '<polygon points="' + keys.map((k, i) => pt(i, v).join(",")).join(" ") + '" fill="none" stroke="#e7cdb8" stroke-width="1"/>'; });
+  keys.forEach((k, i) => { const [x, y] = pt(i, 5); g += '<line x1="' + cx + '" y1="' + cy + '" x2="' + x + '" y2="' + y + '" stroke="#e7cdb8"/>'; const [lx, ly] = pt(i, 6.35); g += '<text x="' + lx + '" y="' + (ly + 5) + '" text-anchor="middle" font-size="13" font-weight="700" fill="' + k[2] + '">' + k[1] + '</text>'; });
+  g += '<polygon points="' + keys.map((k, i) => pt(i, t[k[0]]).join(",")).join(" ") + '" fill="#f97316" fill-opacity=".35" stroke="#ea580c" stroke-width="2.5"/>';
+  keys.forEach((k, i) => { const [x, y] = pt(i, t[k[0]]); g += '<circle cx="' + x + '" cy="' + y + '" r="4" fill="' + k[2] + '"/>'; });
+  const wrap = el("div", { class: "box taste" });
+  wrap.append(el("b", { class: "t", text: "👅 Taste Science" }));
+  const row = el("div", { class: "tw" }); const holder = el("div", {}); holder.innerHTML = '<svg viewBox="0 0 240 240" role="img" aria-label="Five tastes wheel">' + g + '</svg>';
+  const tx = el("div", { class: "tx" }, el("p", { style: "margin:0", text: t.why }));
+  if (t.pairs && t.pairs.length) tx.append(el("b", { text: "Why these pairings work:" }), el("ul", {}, t.pairs.map(x => el("li", { text: x }))));
+  tx.append(el("p", { style: "margin:8px 0 0;font-size:12px;color:#8a6a55", text: "Scores are a general guide (0 to 5); every recipe and palate is different." }));
+  row.append(holder, tx); wrap.append(row);
+  return wrap;
+}
 function renderCatalog(d, r){
   d.append(el("p", { class: "kicker", text: "Food & Drink Catalog" }), el("h2", { text: r.name }));
   if (r.wiki) d.append(photoFig(r.wiki));
@@ -551,6 +571,7 @@ function renderCatalog(d, r){
   if (r.health) d.append(el("div", { class: "box note", text: r.health }));
   sec("Fun Facts", has(r.facts) && el("ul", { class: "cat-list" }, r.facts.map(x => el("li", { text: x }))));
   if (r.wow) d.append(el("div", { class: "box wow" }, el("b", { class: "t", text: "🤯 Wow...Who Knew?" }), r.wow));
+  if (r.taste) d.append(tasteBox(r.taste));
   const eyesWrap = el("div", {});
   const lessonLike = { title: r.name + " (" + (r.category || "food") + ")", intro: r.overview, sections: [{ heading: "History", text: (r.history || []).join(" ") }, { heading: "How it's made", text: (r.howMade || []).join(" ") }], wow: r.wow };
   d.append(el("div", { class: "row" },
@@ -587,6 +608,7 @@ function renderLesson(d, r, stall, stallName){
   d.append(el("p", { class: "lead", text: r.intro }));
   (r.sections || []).forEach(s => d.append(el("h3", { text: s.heading }), el("p", { text: s.text })));
   if (r.wow) d.append(el("div", { class: "box wow" }, el("b", { class: "t", text: "🤯 Wow...Who Knew?" }), r.wow));
+  if (r.taste) d.append(tasteBox(r.taste));
   if (r.kitchen) d.append(el("div", { class: "box kit" }, el("b", { class: "t", text: "🍳 In Your Kitchen" }), r.kitchen));
   if (r.health) d.append(el("div", { class: "box note", text: r.health }));
   const actions = el("div", { class: "row" });

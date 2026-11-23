@@ -79,6 +79,7 @@ Reply with ONLY this JSON inside <json></json>:
  "sections": [{"heading": "short heading", "text": "3-5 sentences"}],   // 3 or 4 sections
  "wow": "one surprising, sourced fact from your research",
  "kitchen": "one sentence connecting this to a real kitchen (a tool, a method, or something to notice next time you cook or shop), or empty string",
+ "taste": {"sweet": 0, "salty": 0, "sour": 0, "bitter": 0, "umami": 0, "why": "1-2 sentences of TASTE SCIENCE: which of the five basic tastes it hits and the chemistry behind them (e.g. sugars, acids, glutamates)", "pairs": ["2-3 classic pairings, each with the short science of why it works, e.g. 'Salt + caramel: salt mutes bitterness so the sweetness pops'"]},   // each taste 0-5; set "taste" to null if the topic is not about one specific food, drink or dish
  "recipeIdea": "if a simple starter recipe naturally fits this lesson, name it (e.g. 'Simple homemade butter'); otherwise empty string",
  "wiki": "the exact English Wikipedia article title that best pictures this lesson (e.g. 'Sourdough')",
  "followups": ["3 short follow-up questions a curious reader might ask next"],
@@ -115,6 +116,7 @@ Reply with ONLY this JSON inside <json></json>:
  "nutrition": "2-4 sentences of general nutrition facts per typical serving, or empty",
  "facts": ["3 surprising, sourced fun facts"],
  "wow": "the single most surprising sourced fact",
+ "taste": {"sweet": 0, "salty": 0, "sour": 0, "bitter": 0, "umami": 0, "why": "1-2 sentences of TASTE SCIENCE: which of the five basic tastes it hits and the chemistry behind them (e.g. sugars, acids, glutamates)", "pairs": ["2-3 classic pairings, each with the short science of why it works, e.g. 'Salt + caramel: salt mutes bitterness so the sweetness pops'"]},   // each taste 0-5; set "taste" to null if the topic is not about one specific food, drink or dish
  "followups": ["4 short questions a curious reader might ask next about it"],
  "wiki": "exact English Wikipedia article title that best pictures it",
  ${sourcesShape}}`;
@@ -326,6 +328,12 @@ module.exports = async (req, res) => {
     const sources = verifySources(j.sources, retrieved);
     const touchesHealth = t => /nutri|vitamin|mineral|protein|calori|diet|health|fiber|sugar|sodium|fat\b|fats\b|carb/i.test(t);
 
+    const tasteOf = t => {
+      if (!t || typeof t !== "object") return null;
+      const n = k => Math.max(0, Math.min(5, Math.round(Number(t[k]) || 0)));
+      const out = { sweet: n("sweet"), salty: n("salty"), sour: n("sour"), bitter: n("bitter"), umami: n("umami"), why: clip(t.why, 400), pairs: clipList(t.pairs, 3, 200) };
+      return (out.sweet + out.salty + out.sour + out.bitter + out.umami) > 0 && out.why ? out : null;
+    };
     if (mode === "lesson") {
       if (j.ok === false) return res.status(200).json({ ok: false, intro: clip(j.intro, 400) || "The Food Hall only serves food topics. Try another one!" });
       if (!sources.length) return res.status(200).json({ ok: false, intro: NOT_CONFIRMED[level] });
@@ -334,7 +342,7 @@ module.exports = async (req, res) => {
       return res.status(200).json({
         ok: true, title: clip(j.title, 140), intro: clip(j.intro, 600), sections, wow: clip(j.wow, 400), kitchen: clip(j.kitchen, 300),
         recipeIdea: clip(j.recipeIdea, 100), wiki: clip(j.wiki, 120), followups: clipList(j.followups, 3, 140),
-        health: b.stall === "nutrition" || touchesHealth(all) ? HEALTH_NOTE : "", sources
+        health: b.stall === "nutrition" || touchesHealth(all) ? HEALTH_NOTE : "", taste: tasteOf(j.taste), sources
       });
     }
 
@@ -357,7 +365,7 @@ module.exports = async (req, res) => {
         enjoy: clip(j.enjoy, 900), buying: clip(j.buying, 900), nutrition, facts: clipList(j.facts, 3, 400),
         wow: clip(j.wow, 400), followups: clipList(j.followups, 4, 140), wiki: clip(j.wiki, 120),
         alcohol: j.alcohol === true ? "Alcoholic drink: for adults of legal drinking age only. Please enjoy responsibly." : "",
-        health: nutrition ? HEALTH_NOTE : "", sources
+        health: nutrition ? HEALTH_NOTE : "", taste: tasteOf(j.taste), sources
       });
     }
 
